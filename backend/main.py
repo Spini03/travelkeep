@@ -1,3 +1,12 @@
+import sys
+
+# Windows abre stdout/stderr con cp1252 por default, que no puede codificar
+# emojis usados en los logs (ej. utils/itinerary_validators.py). Forzamos UTF-8
+# acá para que ande siempre, sin depender de que alguien setee PYTHONIOENCODING.
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
