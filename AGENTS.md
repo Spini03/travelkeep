@@ -68,7 +68,13 @@ npm run type-check  # tsc --noEmit
   lanzado en un thread no se puede usar desde otro, crashea con
   `greenlet.error`), así que el pool NO presta el objeto `Browser` crudo;
   cada slot es un thread dedicado con su propio `sync_playwright()` + browser,
-  y el borrow real es "someter un job a ese thread y esperar". Limpieza de
+  y el borrow real es "someter un job a ese thread y esperar". En Windows,
+  `browser_pool.py` fuerza `asyncio.WindowsProactorEventLoopPolicy` a nivel
+  de módulo (antes de crear threads) — sin esto, si algo en el import chain
+  del proceso real (no reproducido en sandbox) deja la política del loop en
+  Selector, los threads del pool heredan esa política y `sync_playwright()`
+  revienta con `NotImplementedError` al lanzar el subproceso de Chromium
+  (Selector no soporta `subprocess_exec` en Windows). Limpieza de
   `scrape_cache` corre cada 24hs vía APScheduler (`utils/scrape_cache_scheduler.py`,
   reusa `SCRAPE_CACHE_TTL` de `services/accommodations.py`), también arrancado
   en el lifespan. Endpoint `POST /api/accommodations/{id}/retry-scrape` re-corre

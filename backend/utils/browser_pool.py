@@ -7,6 +7,8 @@ handlers on a threadpool, so instead of lending out raw Browser objects, each
 pool slot is a dedicated worker thread that owns its own Playwright instance +
 browser for its entire lifetime and executes submitted jobs on itself.
 """
+import sys
+import asyncio
 import os
 import queue
 import threading
@@ -15,6 +17,13 @@ from concurrent.futures import Future
 from typing import Callable, List, Optional, TypeVar
 
 from playwright.sync_api import sync_playwright, Browser
+
+# On Windows, only ProactorEventLoop can spawn subprocesses (how Playwright
+# launches Chromium). Threads other than the main one default to
+# SelectorEventLoop, which raises NotImplementedError on subprocess_exec — so
+# this must run at import time, before any pool worker thread is created.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 logger = logging.getLogger(__name__)
 
