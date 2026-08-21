@@ -3,8 +3,8 @@ from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 load_dotenv()
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-pro",
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
     temperature=0.4,
     max_tokens=None,
     timeout=None,

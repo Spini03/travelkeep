@@ -11,14 +11,13 @@ import os
 from pydantic import Field, BaseModel
 from states.daily_activities import DailyItineraryOutput
 
-from langchain_google_genai import ChatGoogleGenerativeAI
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-pro",
+from langchain_openai import ChatOpenAI
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
     temperature=0.4,
     max_tokens=None,
     timeout=None,
     max_retries=2,
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
 )
 
 from dotenv import load_dotenv
@@ -146,7 +145,7 @@ def generate_itineraries(state: ItinerariesState):
 
 
 
-llm_structured = llm.with_structured_output(ItineraryOutput)
+llm_structured = llm.with_structured_output(ItineraryOutput, method="function_calling")
 llm_with_tools = llm.bind_tools([web_search])
 
 # Tool node

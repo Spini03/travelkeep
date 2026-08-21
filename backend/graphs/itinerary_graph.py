@@ -21,7 +21,7 @@ def generate_main_itinerary(state: ItineraryGenerate):
     """
     
     # Invocar la IA para generar el itinerario
-    llm_structured = llm.with_structured_output(ViajeState)
+    llm_structured = llm.with_structured_output(ViajeState, method="function_calling")
     viaje_state = llm_structured.invoke(get_itinerary_prompt(state))
     
     # Log de la estructura generada (para debugging)
