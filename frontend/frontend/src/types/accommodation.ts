@@ -14,6 +14,8 @@ export interface AccommodationResponse {
   img_urls: string[];
   provider?: string | null;
   status: string;
+  scrape_status?: string | null;
+  scrape_warning?: string | null;
   created_at: string;
   updated_at: string;
 }

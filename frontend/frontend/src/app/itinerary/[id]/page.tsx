@@ -15,6 +15,7 @@ import {
   listAccommodationsByItineraryAndCity,
   createAccommodation,
   softDeleteAccommodation,
+  retryAccommodationScrape,
 } from "@/lib/accommodationApi";
 import { AccommodationResponse } from "@/types/accommodation";
 import { FloatingEditButton, Button, Input } from "@/components";
@@ -49,6 +50,9 @@ import {
   ChevronUpIcon,
   MoreVerticalIcon,
   TrashIcon,
+  AlertTriangleIcon,
+  RefreshCwIcon,
+  Loader2Icon,
 } from "lucide-react";
 import ItineraryMap from "@/components/itinerary/ItineraryMap";
 import Image from "next/image";
@@ -81,6 +85,9 @@ export default function ItineraryDetailsPage() {
   const [isCreatingByDest, setIsCreatingByDest] = useState<boolean[]>([]);
   const [imageIndexByAccId, setImageIndexByAccId] = useState<
     Record<string, number>
+  >({});
+  const [retryingByAccId, setRetryingByAccId] = useState<
+    Record<string, boolean>
   >({});
   // Cache to track if accommodations have been fetched for current itinerary
   const [accommodationsFetched, setAccommodationsFetched] =
@@ -546,6 +553,16 @@ export default function ItineraryDetailsPage() {
   const handleDeleteLink = async (accommodationId: string) => {
     await softDeleteAccommodation(accommodationId);
     await fetchSavedAccommodations(true);
+  };
+
+  const handleRetryScrape = async (accommodationId: string) => {
+    try {
+      setRetryingByAccId((prev) => ({ ...prev, [accommodationId]: true }));
+      await retryAccommodationScrape(accommodationId);
+      await fetchSavedAccommodations(true);
+    } finally {
+      setRetryingByAccId((prev) => ({ ...prev, [accommodationId]: false }));
+    }
   };
 
   const handleDeleteItinerary = async () => {
@@ -1692,6 +1709,36 @@ export default function ItineraryDetailsPage() {
                                         />
                                       </svg>
                                     </Button>
+                                    {acc.scrape_status === "blocked" ||
+                                    acc.scrape_status === "error" ? (
+                                      <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5">
+                                        <div className="flex items-center gap-1.5 min-w-0 text-[11px] font-medium text-amber-700">
+                                          <AlertTriangleIcon className="h-3.5 w-3.5 flex-none" />
+                                          <span className="truncate">
+                                            {acc.scrape_status === "blocked"
+                                              ? "Bloqueado"
+                                              : "Error al obtener datos"}
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleRetryScrape(acc.id);
+                                          }}
+                                          disabled={retryingByAccId[acc.id]}
+                                          className="inline-flex flex-none items-center gap-1 rounded-full border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          {retryingByAccId[acc.id] ? (
+                                            <Loader2Icon className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            <RefreshCwIcon className="h-3 w-3" />
+                                          )}
+                                          Reintentar
+                                        </button>
+                                      </div>
+                                    ) : null}
                                   </div>
                                 );
                               })}

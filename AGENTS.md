@@ -114,8 +114,8 @@ Sin "Co-Authored-By" ni atribución de IA.
   persistencia de chat (listo) + cierre de alojamiento (listo) + vuelos
   (wiring SerpApi, pendiente).
 - Después: pool de browsers (listo), limpieza automática de `scrape_cache`
-  (listo), endpoint de reintentar scrape (listo backend, falta wiring en
-  frontend), migrar caché a Redis si el volumen de tráfico lo justifica, city
+  (listo), endpoint de reintentar scrape (listo, backend + frontend), migrar
+  caché a Redis si el volumen de tráfico lo justifica, city
   tours, reservas puntuales (boliches/eventos/actividades), otros
   transportes, deploy público, CORS
   para prod.

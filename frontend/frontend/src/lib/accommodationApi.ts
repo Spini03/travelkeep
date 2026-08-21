@@ -37,4 +37,11 @@ export async function softDeleteAccommodation(accommodationId: string) {
   );
 }
 
+export async function retryAccommodationScrape(accommodationId: string) {
+  return apiRequest<AccommodationResponse>(
+    `/api/accommodations/${accommodationId}/retry-scrape`,
+    { method: "POST" }
+  );
+}
+
 
