@@ -8,9 +8,25 @@ from alembic import context
 import models
 from database import Base
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
+DB_NAME = os.getenv('DB_NAME')
+
+DATABASE_URL = f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 # Configura Alembic para que use los metadatos de la Base principal,
 # que ahora contiene todas tus tablas.
 config = context.config
+
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
+
 target_metadata = Base.metadata
 
 if config.config_file_name is not None:
