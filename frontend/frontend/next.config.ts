@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "*.bstatic.com", // Booking.com CDN for accommodation images
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

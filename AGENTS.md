@@ -21,7 +21,7 @@ cd backend
 pip install -r requirements.txt
 playwright install chromium   # paso extra, no lo cubre pip install -r requirements.txt
 alembic upgrade head
-uvicorn main:app --reload --port 8001
+uvicorn main:app --reload --reload-exclude "venv/*" --port 8001
  
 # Frontend (ojo: carpeta anidada frontend/frontend)
 cd frontend\frontend
@@ -84,7 +84,39 @@ npm run type-check  # tsc --noEmit
   `token_blocklist` — existen en la DB pero no en el metadata de SQLAlchemy
   (las crea `PostgresSaver.setup()`, no un modelo ORM). Podar esas líneas a
   mano de cada migración autogenerada, no son parte del diff real.
-- CORS hardcodeado a `http://localhost:3000` — funciona solo en local.
+- CORS acepta `http://localhost:3000` y `:3001` (Next.js toma el siguiente
+  puerto libre si 3000 está ocupado) — todavía solo localhost, no apto para
+  producción.
+- `--reload` de uvicorn puede entrar en loop si vigila `venv/` (que vive
+  adentro de `backend/`) — Python escribe `.pyc` ahí todo el tiempo y
+  `WatchFiles` los toma como cambios, reiniciando el server sin parar y
+  dejando procesos/puertos fantasma. El comando de arriba ya incluye
+  `--reload-exclude "venv/*"` — no lo saques.
+- `get_current_user_optional` (dependencies.py) necesita su propio
+  `HTTPBearer(auto_error=False)` (`bearer_scheme_optional` en
+  `services/jwt_service.py`) — si comparte el `bearer_scheme` normal
+  (`auto_error=True` por default), FastAPI tira 403 "Not authenticated"
+  antes de que la función optional pueda devolver `None`, rompiendo
+  cualquier endpoint pensado para andar con o sin login.
+- LLM de generación de itinerarios (`utils/llm.py`, `graphs/daily_itinerary_graph.py`):
+  `gemini-2.5-pro` fue deprecado por Google para usuarios nuevos. Se migró a
+  `ChatOpenAI(gpt-4o-mini)` (no a `gemini-3.1-pro-preview`: el nombre es
+  válido pero la API key de Google está en free tier con cuota 0 para
+  modelos preview). `with_structured_output()` necesita `method="function_calling"`
+  con OpenAI — el modo estricto por default rechaza el schema de
+  `ViajeState`/`ItineraryOutput` (falta `additionalProperties`).
+  `llm_cheap` (`gemini-2.5-flash`) sigue vigente pero es dead code — nada lo
+  usa de verdad.
+- Playwright en Windows necesita `playwright install chromium` por separado
+  (no lo cubre `pip install`) — y desde Playwright 1.55 también baja un
+  binario `headless_shell` aparte; si falta, tira
+  `Executable doesn't exist at ...headless_shell...`, mismo comando lo
+  arregla.
+- `main.py` fuerza `sys.stdout`/`sys.stderr` a UTF-8 en Windows al arrancar
+  (antes que cualquier otro import) — la consola de Windows usa `cp1252` por
+  default y no puede imprimir los emojis de los logs de generación
+  (`itinerary_validators.py`, `itinerary_graph.py`), tira `UnicodeEncodeError`
+  sin esto. No depende de ninguna env var, corre siempre.
 ## Constraints
  
 - **Nunca ejecutar comandos git** sin aprobación explícita — los ejecuta Santiago.
@@ -99,7 +131,7 @@ npm run type-check  # tsc --noEmit
   configurados y funcionan.
 ## Verify changes
  
-1. Backend: levantar server (`uvicorn main:app --reload --port 8001`), probar
+1. Backend: levantar server (`uvicorn main:app --reload --reload-exclude "venv/*" --port 8001`), probar
    endpoint afectado manualmente.
 2. Frontend: `npm run lint` + `npm run type-check`, luego probar en
    `localhost:3000`.
