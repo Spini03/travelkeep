@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,14 +27,23 @@ from models.traveler_test.question_option_score import Base as QuestionOptionSco
 from models.traveler_test.user_answers import Base as UserAnswersBase
 from models.traveler_test.user_traveler_test import Base as UserTravelerTestBase
 from starlette.middleware.sessions import SessionMiddleware
+from utils.checkpointer import setup_checkpointer
 import os
 
 import uvicorn
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_checkpointer()
+    yield
+
+
 app = FastAPI(
-    title="TravelSmart AI API",
+    title="TravelKeep AI API",
     description="AI-powered travel planning and user management API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware for frontend integration

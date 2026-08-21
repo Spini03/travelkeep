@@ -5,7 +5,6 @@ This graph is used to create a react agent with a custom state and tools.
 
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt.chat_agent_executor import AgentState
 from langgraph.prebuilt import InjectedState
 from pydantic import Field
@@ -23,11 +22,12 @@ from states.itinerary import ViajeState
 
 from langgraph.types import interrupt
 
+from utils.checkpointer import checkpointer
+
 # Define model and checkpointer
 model = ChatOpenAI(model="gpt-4o")
 # model = llm
 web_search_model = "gpt-5-mini"
-checkpointer = MemorySaver()
 
 # ==== Custom state ====
 summarization_node = SummarizationNode( 

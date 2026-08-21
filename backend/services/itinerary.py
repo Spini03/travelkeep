@@ -20,6 +20,20 @@ from langgraph.types import Command
 from models.traveler_test.traveler_type import TravelerType
 import json
 
+AGENT_CHECKPOINT_NS = {
+    "itinerary_agent": "itinerary",
+    "activities_chat_agent": "activities",
+}
+
+
+def _namespaced_thread_id(thread_id: str, agent_str: str) -> str:
+    """Suffix the thread_id per agent so itinerary_agent and activities_chat_agent,
+    which share the same itinerary_id as thread_id, don't collide in the shared
+    Postgres checkpointer (checkpoint_ns can't be reused for this: it's reserved
+    by LangGraph for subgraph resolution and breaks get_state on a top-level graph).
+    """
+    return f"{thread_id}:{AGENT_CHECKPOINT_NS[agent_str]}"
+
 class ItineraryService:
     """Service class for itinerary CRUD operations"""
     
@@ -381,14 +395,16 @@ class ItineraryService:
         return result
 
     
-    def initilize_agent(self, itinerary_id: uuid.UUID, thread_id: str, message: str):
+    def initilize_agent(self, itinerary_id: uuid.UUID, thread_id: str, message: str, agent_str: str):
+
+        agent = itinerary_agent if agent_str == "itinerary_agent" else activities_chat_agent
 
         config: RunnableConfig = {
             "configurable": {
-                "thread_id": thread_id,
+                "thread_id": _namespaced_thread_id(thread_id, agent_str),
             }
         }
-        
+
         itinerary = self.get_itinerary_by_id(itinerary_id)
 
         initial_state = {
@@ -396,20 +412,14 @@ class ItineraryService:
             "messages": message,
         }
 
-        itinerary_agent.invoke(initial_state, config=config)
+        agent.invoke(initial_state, config=config)
 
-        raw_state = itinerary_agent.get_state(config)
+        raw_state = agent.get_state(config)
 
-        return state_to_dict(raw_state)  
+        return state_to_dict(raw_state)
 
 
     def send_agent_message(self, itinerary_id: uuid.UUID, thread_id: str, message: str):
-        config: RunnableConfig = {
-            "configurable": {
-                "thread_id": thread_id,
-            }
-        }
-
         status = self.get_itinerary_by_id(itinerary_id).status
         if status == "confirmed":
             agent = activities_chat_agent
@@ -418,9 +428,15 @@ class ItineraryService:
             agent_str = "itinerary_agent"
             agent = itinerary_agent
 
+        config: RunnableConfig = {
+            "configurable": {
+                "thread_id": _namespaced_thread_id(thread_id, agent_str),
+            }
+        }
+
         agent_state = self.get_agent_state(thread_id, agent_str)
         if not agent_state:
-            self.initilize_agent(itinerary_id, thread_id, message)
+            self.initilize_agent(itinerary_id, thread_id, message, agent_str)
             return self.get_agent_state(thread_id, agent_str)
 
         is_hil_mode, hil_message, state_values = detect_hil_mode(agent, config)
@@ -457,12 +473,6 @@ class ItineraryService:
 
 
     def send_agent_message_stream(self, itinerary_id: uuid.UUID, thread_id: str, message: str):
-        config: RunnableConfig = {
-            "configurable": {
-                "thread_id": thread_id,
-            }
-        }
-
         status = self.get_itinerary_by_id(itinerary_id).status
         if status == "confirmed":
             agent = activities_chat_agent
@@ -470,6 +480,12 @@ class ItineraryService:
         else:
             agent = itinerary_agent
             agent_str = "itinerary_agent"
+
+        config: RunnableConfig = {
+            "configurable": {
+                "thread_id": _namespaced_thread_id(thread_id, agent_str),
+            }
+        }
 
         agent_state = self.get_agent_state(thread_id, agent_str)
 
@@ -519,18 +535,18 @@ class ItineraryService:
         yield "data: [DONE]\n\n"    
 
     def get_agent_state(self, thread_id: str, agent_str: str):
-        config: RunnableConfig = {
-            "configurable": {
-                "thread_id": thread_id,
-            }
-        }
-
         if agent_str == "itinerary_agent":
             agent = itinerary_agent
         elif agent_str == "activities_chat_agent":
             agent = activities_chat_agent
         else:
             return False
+
+        config: RunnableConfig = {
+            "configurable": {
+                "thread_id": _namespaced_thread_id(thread_id, agent_str),
+            }
+        }
 
         raw_state = agent.get_state(config)
         state_dict = state_to_dict(raw_state)
