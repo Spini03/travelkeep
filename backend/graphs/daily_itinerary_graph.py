@@ -7,6 +7,7 @@ from graphs.activities_city import OUTPUT_TEMPLATE
 from tools.web_search import web_search
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
+import os
 from pydantic import Field, BaseModel
 from states.daily_activities import DailyItineraryOutput
 
@@ -17,6 +18,7 @@ llm = ChatGoogleGenerativeAI(
     max_tokens=None,
     timeout=None,
     max_retries=2,
+    google_api_key=os.getenv("GOOGLE_API_KEY"),
 )
 
 from dotenv import load_dotenv
