@@ -30,6 +30,7 @@ class AccommodationResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    scrape_warning: Optional[str] = None
 
     class Config:
         from_attributes = True

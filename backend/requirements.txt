@@ -74,6 +74,7 @@ orjson==3.10.16
 ormsgpack==1.10.0
 packaging==24.2
 pathspec==0.12.1
+playwright==1.55.0
 propcache==0.3.2
 psycopg==3.2.9
 psycopg-binary==3.2.9

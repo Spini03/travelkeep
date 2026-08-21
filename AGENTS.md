@@ -19,6 +19,7 @@ Frontend: Next.js 15 + React 19 + TS, Context+useReducer (sin Redux/Zustand).
 cd backend
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+playwright install chromium   # paso extra, no lo cubre pip install -r requirements.txt
 alembic upgrade head
 uvicorn main:app --reload --port 8001
  

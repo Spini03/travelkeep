@@ -1,3 +1,4 @@
+import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List, Optional
@@ -7,6 +8,8 @@ from urllib.parse import urlparse
 from models.accommodations import Accommodations
 from schemas.accommodations import AccommodationCreate, AccommodationUpdate
 from utils.scrapper import scrape_accommodation
+
+logger = logging.getLogger(__name__)
 
 
 class AccommodationsService:
@@ -39,17 +42,20 @@ class AccommodationsService:
             raise ValueError("This accommodation is already in the list for this itinerary")
 
         url_str = str(data.url)
+        scrape_warning = None
         try:
             scraped_data = scrape_accommodation(url_str)
             provider = scraped_data["provider"]
             title = scraped_data["title"]
             description = scraped_data["description"]
-            img_urls = scraped_data["images"]            
+            img_urls = scraped_data["images"]
         except Exception as e:
+            logger.warning("Scrape failed for accommodation URL %s: %s", url_str, e)
             provider = self._detect_provider(url_str)
             title = None
             description = None
-            img_urls = []            
+            img_urls = []
+            scrape_warning = "No se pudo obtener información automática de este link, completá los datos manualmente"
 
         new_record = Accommodations(
             itinerary_id=data.itinerary_id,
@@ -63,6 +69,7 @@ class AccommodationsService:
         self.db.add(new_record)
         self.db.commit()
         self.db.refresh(new_record)
+        new_record.scrape_warning = scrape_warning
         return new_record
 
     def get_by_id(self, accommodation_id: UUID_TYPE) -> Optional[Accommodations]:

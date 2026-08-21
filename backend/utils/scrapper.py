@@ -1,11 +1,20 @@
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
-import httpx
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 import json
-import random
-import time
-import os
+
+NAV_TIMEOUT_MS = 20000
+CONTENT_TIMEOUT_MS = 15000
+
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+)
+
+
+class ScrapeBlockedError(Exception):
+    """Raised when the page loaded but returned no usable listing data (bot block, challenge page, etc.)."""
 
 
 def _detect_provider(url: str) -> str:
@@ -22,28 +31,66 @@ def _detect_provider(url: str) -> str:
 def scrape_accommodation(url: str) -> Dict[str, Optional[str] | List[str]]:
     provider = _detect_provider(url)
     if provider == "AIRBNB":
-        return _scrape_airbnb(url)
+        return _scrape_with_playwright(url, provider, _extract_airbnb)
     if provider == "BOOKING":
-        return _scrape_booking(url)
+        return _scrape_with_playwright(url, provider, _extract_booking)
     # if provider == "EXPEDIA":
     #     return _scrape_expedia(url)
     # Fallback
     return {"provider": provider, "title": None, "description": None, "images": []}
 
 
-def _scrape_airbnb(url: str) -> Dict[str, Optional[str] | List[str]]:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-    with httpx.Client(follow_redirects=True, timeout=20) as client:
-        resp = client.get(url, headers=headers)
-        resp.raise_for_status()
-        html = resp.text
+def _scrape_with_playwright(url: str, provider: str, extractor) -> Dict[str, Optional[str] | List[str]]:
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        try:
+            context = browser.new_context(
+                user_agent=USER_AGENT,
+                locale="en-US",
+            )
+            try:
+                page = context.new_page()
+                page.set_default_timeout(CONTENT_TIMEOUT_MS)
+                page.goto(url, timeout=NAV_TIMEOUT_MS, wait_until="domcontentloaded")
+                try:
+                    page.wait_for_load_state("networkidle", timeout=CONTENT_TIMEOUT_MS)
+                except Exception:
+                    pass
+                html = page.content()
+            finally:
+                context.close()
+        finally:
+            browser.close()
 
+    result = extractor(html, provider)
+
+    if _is_blocked(result, html):
+        raise ScrapeBlockedError(f"{provider} returned no usable listing data (possible bot block) for {url}")
+
+    return result
+
+
+_BLOCK_TITLE_MARKERS = (
+    "attention required",
+    "access denied",
+    "just a moment",
+    "pardon our interruption",
+    "are you a human",
+    "request unsuccessful",
+)
+
+
+def _is_blocked(result: Dict[str, Optional[str] | List[str]], html: str) -> bool:
+    if not result["title"] and not result["description"]:
+        return True
+    doc_title_match = BeautifulSoup(html, "html.parser").select_one("title")
+    doc_title = (doc_title_match.text if doc_title_match else "").lower()
+    return any(marker in doc_title for marker in _BLOCK_TITLE_MARKERS)
+
+
+def _extract_airbnb(html: str, provider: str) -> Dict[str, Optional[str] | List[str]]:
     soup = BeautifulSoup(html, "html.parser")
 
-    # Title and description via meta tags or JSON-LD
     title = _first_non_empty(
         soup.select_one('meta[property="og:title"]'),
         soup.select_one('meta[name="twitter:title"]'),
@@ -82,31 +129,17 @@ def _scrape_airbnb(url: str) -> Dict[str, Optional[str] | List[str]]:
         if og_image and og_image.get("content"):
             images.append(og_image.get("content"))
 
-    # Deduplicate and cap to 5
-    deduped = []
-    for u in images:
-        if isinstance(u, str) and u not in deduped:
-            deduped.append(u)
-    images_out = deduped[:5]
+    images_out = _dedupe_cap(images, 5)
 
     return {
-        "provider": "AIRBNB",
+        "provider": provider,
         "title": title_text,
         "description": description_text,
         "images": images_out,
     }
 
 
-def _scrape_booking(url: str) -> Dict[str, Optional[str] | List[str]]:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-    with httpx.Client(follow_redirects=True, timeout=20) as client:
-        resp = client.get(url, headers=headers)
-        resp.raise_for_status()
-        html = resp.text
-
+def _extract_booking(html: str, provider: str) -> Dict[str, Optional[str] | List[str]]:
     soup = BeautifulSoup(html, "html.parser")
 
     title = _first_non_empty(
@@ -147,12 +180,11 @@ def _scrape_booking(url: str) -> Dict[str, Optional[str] | List[str]]:
     images_out = _dedupe_cap(images, 5)
 
     return {
-        "provider": "BOOKING",
+        "provider": provider,
         "title": title_text,
         "description": description_text,
         "images": images_out,
     }
-
 
 
 def _extract_images_from_jsonld(data: dict) -> List[str]:
@@ -188,5 +220,3 @@ def _dedupe_cap(items: List[str], limit: int) -> List[str]:
             if len(out) >= limit:
                 break
     return out
-
-
