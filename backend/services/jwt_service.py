@@ -20,12 +20,12 @@ from models.token_models import TokenBlocklist, TokenType
 load_dotenv()
 
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+ALGORITHM = os.getenv("JWT_ALGORITHM")
 GOOGLE_TOKEN_EXPIRE_MINUTES = int(os.getenv("GOOGLE_TOKEN_EXPIRE_MINUTES", "1"))
 EMAIL_TOKEN_EXPIRE_MINUTES = int(os.getenv("EMAIL_TOKEN_EXPIRE_MINUTES", "5"))
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 
 class TokenPair(BaseModel):
@@ -44,7 +44,7 @@ bearer_scheme = HTTPBearer(
 class JWTService:
     def __init__(self, db: Depends(get_db)):
         self.db = db
-        self.sercret = SECRET_KEY
+        self.secret = SECRET_KEY
         self.algorithm = ALGORITHM
 
     # ==================== DB-RELATED METHODS ====================
@@ -101,35 +101,35 @@ class JWTService:
         if expires_delta is None:
             expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode, expires_in = self._with_standard_claims(data, token_type="access", exp_delta=expires_delta)
-        return jwt.encode(to_encode, self.sercret, algorithm=self.algorithm), expires_in
+        return jwt.encode(to_encode, self.secret, algorithm=self.algorithm), expires_in
 
 
     def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         if expires_delta is None:
             expires_delta = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         to_encode, _ = self._with_standard_claims(data, token_type="refresh", exp_delta=expires_delta)
-        return jwt.encode(to_encode, self.sercret, algorithm=self.algorithm)
+        return jwt.encode(to_encode, self.secret, algorithm=self.algorithm)
 
 
     def create_email_verification_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         if expires_delta is None:
             expires_delta = timedelta(minutes=EMAIL_TOKEN_EXPIRE_MINUTES)
         to_encode, _ = self._with_standard_claims(data, token_type="email_verified", exp_delta=expires_delta)
-        return jwt.encode(to_encode, self.sercret, algorithm=self.algorithm)
+        return jwt.encode(to_encode, self.secret, algorithm=self.algorithm)
 
 
     def create_google_verification_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         if expires_delta is None:
             expires_delta = timedelta(minutes=GOOGLE_TOKEN_EXPIRE_MINUTES)
         to_encode, _ = self._with_standard_claims(data, token_type="google_verified", exp_delta=expires_delta)
-        return jwt.encode(to_encode, self.sercret, algorithm=self.algorithm)
+        return jwt.encode(to_encode, self.secret, algorithm=self.algorithm)
 
 
     # ==================== TOKEN VALIDATION ====================
 
     def validate_access_token(self, token_str: str) -> dict:
         try:
-            payload = jwt.decode(token_str, self.sercret, algorithms=[self.algorithm])
+            payload = jwt.decode(token_str, self.secret, algorithms=[self.algorithm])
             if payload.get("type") != "access":
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -141,7 +141,7 @@ class JWTService:
 
     def validate_email_verified_token(self, token_str: str) -> dict:
         try:
-            payload = jwt.decode(token_str, self.sercret, algorithms=[self.algorithm])
+            payload = jwt.decode(token_str, self.secret, algorithms=[self.algorithm])
             if payload.get("type") != "email_verified":
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -153,7 +153,7 @@ class JWTService:
 
     def validate_google_verified_token(self, token_str: str) -> dict:
         try:
-            payload = jwt.decode(token_str, self.sercret, algorithms=[self.algorithm])
+            payload = jwt.decode(token_str, self.secret, algorithms=[self.algorithm])
             if payload.get("type") != "google_verified":
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -165,7 +165,7 @@ class JWTService:
 
     def validate_refresh_token(self, refresh_token: str) -> dict:
         try:
-            payload = jwt.decode(refresh_token, self.sercret, algorithms=[self.algorithm])
+            payload = jwt.decode(refresh_token, self.secret, algorithms=[self.algorithm])
             if payload.get("type") != "refresh":
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

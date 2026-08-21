@@ -44,17 +44,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY"))
 
 # Create database tables
-ItineraryBase.metadata.create_all(bind=engine)
-UserBase.metadata.create_all(bind=engine)
-TravelerTypeBase.metadata.create_all(bind=engine)
-QuestionBase.metadata.create_all(bind=engine)
-QuestionOptionBase.metadata.create_all(bind=engine)
-QuestionOptionScoreBase.metadata.create_all(bind=engine)
-UserAnswersBase.metadata.create_all(bind=engine)
-UserTravelerTestBase.metadata.create_all(bind=engine)
+# NOTA: comentado — la creación de tablas ahora la maneja Alembic exclusivamente (alembic upgrade head)
+# ItineraryBase.metadata.create_all(bind=engine)
+# UserBase.metadata.create_all(bind=engine)
+# TravelerTypeBase.metadata.create_all(bind=engine)
+# QuestionBase.metadata.create_all(bind=engine)
+# QuestionOptionBase.metadata.create_all(bind=engine)
+# QuestionOptionScoreBase.metadata.create_all(bind=engine)
+# UserAnswersBase.metadata.create_all(bind=engine)
+# UserTravelerTestBase.metadata.create_all(bind=engine)
 
 # Include routes
 app.include_router(auth_router)  # Authentication routes (/auth)
