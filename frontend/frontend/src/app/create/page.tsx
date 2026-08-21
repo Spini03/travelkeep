@@ -494,14 +494,18 @@ export default function CreateItineraryPage() {
   }, [isAuthenticated, user]);
 
   // Clear server errors when user starts typing
-  form.watch();
-  if (
-    error &&
-    (form.formState.dirtyFields.trip_name ||
-      form.formState.dirtyFields.duration_days)
-  ) {
-    clearError();
-  }
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (
+        error &&
+        (form.formState.dirtyFields.trip_name ||
+          form.formState.dirtyFields.duration_days)
+      ) {
+        clearError();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [error, form, clearError]);
 
   return (
     <div className="bg-palette-light-sky min-h-screen">

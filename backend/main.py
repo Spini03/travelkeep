@@ -53,9 +53,15 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend integration
+# Localhost only, varios puertos porque Next.js toma el siguiente libre si 3000
+# está ocupado (3000/3001 cubren el caso común). Todavía no apto para producción
+# (ver AGENTS.md, "después").
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Add your frontend URL
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
