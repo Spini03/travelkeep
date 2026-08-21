@@ -62,7 +62,17 @@ npm run type-check  # tsc --noEmit
   no ejecuta JS y no lo detecta. Caché cache-aside en tabla `scrape_cache`
   (Postgres, TTL 7 días, compartida por URL entre usuarios/itinerarios) antes
   de scrapear. `scrape_status` persistido en `Accommodations`
-  (success/blocked/error).
+  (success/blocked/error). Pool fijo de browsers (`utils/browser_pool.py`,
+  default 3, `PLAYWRIGHT_POOL_SIZE`) arrancado en el lifespan de `main.py` —
+  OJO: Playwright sync API NO es thread-safe entre threads (un `Browser`
+  lanzado en un thread no se puede usar desde otro, crashea con
+  `greenlet.error`), así que el pool NO presta el objeto `Browser` crudo;
+  cada slot es un thread dedicado con su propio `sync_playwright()` + browser,
+  y el borrow real es "someter un job a ese thread y esperar". Limpieza de
+  `scrape_cache` corre cada 24hs vía APScheduler (`utils/scrape_cache_scheduler.py`,
+  reusa `SCRAPE_CACHE_TTL` de `services/accommodations.py`), también arrancado
+  en el lifespan. Endpoint `POST /api/accommodations/{id}/retry-scrape` re-corre
+  el cache-aside de siempre (no bypassea caché).
 - `alembic revision --autogenerate` va a detectar como "diff" las tablas de
   LangGraph (`checkpoints`, `checkpoint_blobs`, `checkpoint_writes`) y
   `token_blocklist` — existen en la DB pero no en el metadata de SQLAlchemy
@@ -103,9 +113,9 @@ Sin "Co-Authored-By" ni atribución de IA.
 - MVP: itinerarios + chat IA + traveler-test (ya existente, se extiende) +
   persistencia de chat (listo) + cierre de alojamiento (listo) + vuelos
   (wiring SerpApi, pendiente).
-- Después: limpieza automática de `scrape_cache` (cron/job), pool de
-  browsers/cola de jobs para Playwright si hay scraping concurrente real,
-  endpoint de "reintentar scrape" en el frontend, migrar caché a Redis si el
-  volumen de tráfico lo justifica, city tours, reservas puntuales
-  (boliches/eventos/actividades), otros transportes, deploy público, CORS
+- Después: pool de browsers (listo), limpieza automática de `scrape_cache`
+  (listo), endpoint de reintentar scrape (listo backend, falta wiring en
+  frontend), migrar caché a Redis si el volumen de tráfico lo justifica, city
+  tours, reservas puntuales (boliches/eventos/actividades), otros
+  transportes, deploy público, CORS
   para prod.

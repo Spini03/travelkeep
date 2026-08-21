@@ -1,8 +1,10 @@
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Browser
 import json
+
+from utils.browser_pool import browser_pool
 
 NAV_TIMEOUT_MS = 20000
 CONTENT_TIMEOUT_MS = 15000
@@ -41,27 +43,24 @@ def scrape_accommodation(url: str) -> Dict[str, Optional[str] | List[str]]:
 
 
 def _scrape_with_playwright(url: str, provider: str, extractor) -> Dict[str, Optional[str] | List[str]]:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+    def do_scrape(browser: Browser) -> str:
+        context = browser.new_context(
+            user_agent=USER_AGENT,
+            locale="en-US",
+        )
         try:
-            context = browser.new_context(
-                user_agent=USER_AGENT,
-                locale="en-US",
-            )
+            page = context.new_page()
+            page.set_default_timeout(CONTENT_TIMEOUT_MS)
+            page.goto(url, timeout=NAV_TIMEOUT_MS, wait_until="domcontentloaded")
             try:
-                page = context.new_page()
-                page.set_default_timeout(CONTENT_TIMEOUT_MS)
-                page.goto(url, timeout=NAV_TIMEOUT_MS, wait_until="domcontentloaded")
-                try:
-                    page.wait_for_load_state("networkidle", timeout=CONTENT_TIMEOUT_MS)
-                except Exception:
-                    pass
-                html = page.content()
-            finally:
-                context.close()
+                page.wait_for_load_state("networkidle", timeout=CONTENT_TIMEOUT_MS)
+            except Exception:
+                pass
+            return page.content()
         finally:
-            browser.close()
+            context.close()
 
+    html = browser_pool.run(do_scrape)
     result = extractor(html, provider)
 
     if _is_blocked(result, html):

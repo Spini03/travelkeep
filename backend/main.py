@@ -28,6 +28,8 @@ from models.traveler_test.user_answers import Base as UserAnswersBase
 from models.traveler_test.user_traveler_test import Base as UserTravelerTestBase
 from starlette.middleware.sessions import SessionMiddleware
 from utils.checkpointer import setup_checkpointer
+from utils.browser_pool import browser_pool
+from utils.scrape_cache_scheduler import start_scrape_cache_scheduler, stop_scrape_cache_scheduler
 import os
 
 import uvicorn
@@ -36,7 +38,11 @@ import uvicorn
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_checkpointer()
+    browser_pool.start()
+    start_scrape_cache_scheduler()
     yield
+    stop_scrape_cache_scheduler()
+    browser_pool.stop()
 
 
 app = FastAPI(

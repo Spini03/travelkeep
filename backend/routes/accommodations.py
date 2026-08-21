@@ -102,6 +102,18 @@ def list_accommodations_by_itinerary_and_city(
     return service.list_by_itinerary_and_city(itinerary_id, city, skip, limit)
 
 
+@accommodations_router.post("/{accommodation_id}/retry-scrape", response_model=AccommodationResponse)
+def retry_scrape_accommodation(
+    accommodation_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    service: AccommodationsService = get_accommodations_service(db)
+    record = service.retry_scrape(accommodation_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Accommodation not found")
+    return record
+
+
 @accommodations_router.post("/scrape", response_model=AccommodationScrapeResponse)
 def scrape_accommodation_by_url(payload: AccommodationScrapeRequest):
     try:

@@ -28,6 +28,7 @@ class AccommodationResponse(BaseModel):
     img_urls: List[AnyUrl] = Field(default_factory=list)
     provider: Optional[str]
     status: str
+    scrape_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     scrape_warning: Optional[str] = None

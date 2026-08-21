@@ -109,6 +109,22 @@ class AccommodationsService:
 
         return scraped_data, "success", None
 
+    def retry_scrape(self, accommodation_id: UUID_TYPE) -> Optional[Accommodations]:
+        record = self.get_by_id(accommodation_id)
+        if not record:
+            return None
+
+        scraped_data, scrape_status, scrape_warning = self._get_scrape_data(record.url)
+        record.provider = scraped_data["provider"]
+        record.title = scraped_data["title"]
+        record.description = scraped_data["description"]
+        record.img_urls = scraped_data["images"]
+        record.scrape_status = scrape_status
+        self.db.commit()
+        self.db.refresh(record)
+        record.scrape_warning = scrape_warning
+        return record
+
     def get_by_id(self, accommodation_id: UUID_TYPE) -> Optional[Accommodations]:
         return self.db.query(Accommodations).filter(Accommodations.id == accommodation_id).first()
 
