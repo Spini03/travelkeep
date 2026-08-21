@@ -18,6 +18,7 @@ class Accommodations(Base):
     img_urls: Mapped[JSON] = mapped_column(JSON, nullable=False, server_default="[]")
     provider: Mapped[str] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
+    scrape_status: Mapped[str] = mapped_column(String(20), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

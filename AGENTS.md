@@ -51,9 +51,23 @@ npm run type-check  # tsc --noEmit
   el schema, nunca reactivar create_all.
 - Migración `aa7c9965a439` tiene un parche (comentado) porque dropeaba
   índices/tabla `token_blocklist` inexistentes en cadena limpia.
-- `MemorySaver()` in-memory en `graphs/itinerary_chat_agent.py` y
-  `activities_chat_agent.py` — el historial del chat IA se pierde al reiniciar
-  el server (bloqueante, ver Pendientes en contexto de sesión).
+- Chat IA persiste con `PostgresSaver` compartido (`utils/checkpointer.py`),
+  no `MemorySaver()`. `itinerary_agent` y `activities_chat_agent` comparten
+  `thread_id` (= `itinerary_id`) pero usan `thread_id` sufijado
+  (`:itinerary` / `:activities`) para no pisarse — NO usar `checkpoint_ns`
+  para esto, es para subgrafos internos de LangGraph, no para separar agentes
+  independientes (rompe `get_state()` con `ValueError` si se usa mal).
+- Alojamiento: scraping con Playwright headless (`utils/scrapper.py`), no
+  httpx — Airbnb/Booking bloquean bots con 200/202 disfrazados de éxito, httpx
+  no ejecuta JS y no lo detecta. Caché cache-aside en tabla `scrape_cache`
+  (Postgres, TTL 7 días, compartida por URL entre usuarios/itinerarios) antes
+  de scrapear. `scrape_status` persistido en `Accommodations`
+  (success/blocked/error).
+- `alembic revision --autogenerate` va a detectar como "diff" las tablas de
+  LangGraph (`checkpoints`, `checkpoint_blobs`, `checkpoint_writes`) y
+  `token_blocklist` — existen en la DB pero no en el metadata de SQLAlchemy
+  (las crea `PostgresSaver.setup()`, no un modelo ORM). Podar esas líneas a
+  mano de cada migración autogenerada, no son parte del diff real.
 - CORS hardcodeado a `http://localhost:3000` — funciona solo en local.
 ## Constraints
  
@@ -87,6 +101,11 @@ Sin "Co-Authored-By" ni atribución de IA.
 ## Decisiones tomadas (MVP vs después)
  
 - MVP: itinerarios + chat IA + traveler-test (ya existente, se extiende) +
-  persistencia de chat + cierre de alojamiento + vuelos (wiring SerpApi).
-- Después: city tours, reservas puntuales (boliches/eventos/actividades),
-  otros transportes, deploy público, CORS para prod.
+  persistencia de chat (listo) + cierre de alojamiento (listo) + vuelos
+  (wiring SerpApi, pendiente).
+- Después: limpieza automática de `scrape_cache` (cron/job), pool de
+  browsers/cola de jobs para Playwright si hay scraping concurrente real,
+  endpoint de "reintentar scrape" en el frontend, migrar caché a Redis si el
+  volumen de tráfico lo justifica, city tours, reservas puntuales
+  (boliches/eventos/actividades), otros transportes, deploy público, CORS
+  para prod.

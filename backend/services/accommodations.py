@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List, Optional
@@ -6,10 +7,13 @@ from uuid import UUID as UUID_TYPE
 from urllib.parse import urlparse
 
 from models.accommodations import Accommodations
+from models.scrape_cache import ScrapeCache
 from schemas.accommodations import AccommodationCreate, AccommodationUpdate
-from utils.scrapper import scrape_accommodation
+from utils.scrapper import scrape_accommodation, ScrapeBlockedError
 
 logger = logging.getLogger(__name__)
+
+SCRAPE_CACHE_TTL = timedelta(days=7)
 
 
 class AccommodationsService:
@@ -42,20 +46,11 @@ class AccommodationsService:
             raise ValueError("This accommodation is already in the list for this itinerary")
 
         url_str = str(data.url)
-        scrape_warning = None
-        try:
-            scraped_data = scrape_accommodation(url_str)
-            provider = scraped_data["provider"]
-            title = scraped_data["title"]
-            description = scraped_data["description"]
-            img_urls = scraped_data["images"]
-        except Exception as e:
-            logger.warning("Scrape failed for accommodation URL %s: %s", url_str, e)
-            provider = self._detect_provider(url_str)
-            title = None
-            description = None
-            img_urls = []
-            scrape_warning = "No se pudo obtener información automática de este link, completá los datos manualmente"
+        scraped_data, scrape_status, scrape_warning = self._get_scrape_data(url_str)
+        provider = scraped_data["provider"]
+        title = scraped_data["title"]
+        description = scraped_data["description"]
+        img_urls = scraped_data["images"]
 
         new_record = Accommodations(
             itinerary_id=data.itinerary_id,
@@ -65,12 +60,54 @@ class AccommodationsService:
             description=description,
             img_urls=img_urls,
             provider=provider,
+            scrape_status=scrape_status,
         )
         self.db.add(new_record)
         self.db.commit()
         self.db.refresh(new_record)
         new_record.scrape_warning = scrape_warning
         return new_record
+
+    def _get_scrape_data(self, url_str: str):
+        """Cache-aside lookup for scrape_accommodation(). Returns (data, scrape_status, scrape_warning)."""
+        cache_hit = self.db.query(ScrapeCache).filter(ScrapeCache.url == url_str).first()
+        if cache_hit is not None:
+            age = datetime.now(timezone.utc) - cache_hit.scraped_at
+            if age < SCRAPE_CACHE_TTL:
+                logger.info("Scrape cache hit for URL %s (age=%s)", url_str, age)
+                return cache_hit.data, "success", None
+
+        try:
+            scraped_data = scrape_accommodation(url_str)
+        except ScrapeBlockedError as e:
+            logger.warning("Scrape blocked for accommodation URL %s: %s", url_str, e)
+            fallback_data = {
+                "provider": self._detect_provider(url_str),
+                "title": None,
+                "description": None,
+                "images": [],
+            }
+            warning = "No se pudo obtener información automática de este link, completá los datos manualmente"
+            return fallback_data, "blocked", warning
+        except Exception as e:
+            logger.warning("Scrape failed for accommodation URL %s: %s", url_str, e)
+            fallback_data = {
+                "provider": self._detect_provider(url_str),
+                "title": None,
+                "description": None,
+                "images": [],
+            }
+            warning = "No se pudo obtener información automática de este link, completá los datos manualmente"
+            return fallback_data, "error", warning
+
+        if cache_hit is not None:
+            cache_hit.data = scraped_data
+            cache_hit.scraped_at = datetime.now(timezone.utc)
+        else:
+            self.db.add(ScrapeCache(url=url_str, data=scraped_data))
+        self.db.commit()
+
+        return scraped_data, "success", None
 
     def get_by_id(self, accommodation_id: UUID_TYPE) -> Optional[Accommodations]:
         return self.db.query(Accommodations).filter(Accommodations.id == accommodation_id).first()
