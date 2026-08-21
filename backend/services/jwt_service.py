@@ -40,6 +40,12 @@ bearer_scheme = HTTPBearer(
     description="Enter your access token here",
 )
 
+bearer_scheme_optional = HTTPBearer(
+    scheme_name="Bearer Token (Optional)",
+    description="Enter your access token here",
+    auto_error=False,
+)
+
 
 class JWTService:
     def __init__(self, db: Depends(get_db)):

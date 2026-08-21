@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from services.jwt_service import bearer_scheme, get_token_service, JWTService
+from services.jwt_service import bearer_scheme, bearer_scheme_optional, get_token_service, JWTService
 from services.user import UserService, get_user_service
 from models.user import User, UserRoleEnum
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import status
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 from models.user import UserStatusEnum
@@ -40,7 +40,7 @@ async def get_current_active_admin_user(
 
 
 async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme_optional),
     token_service: JWTService = Depends(get_token_service),
     user_service: UserService = Depends(get_user_service)
 ):
