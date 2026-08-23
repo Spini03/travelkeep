@@ -157,3 +157,7 @@ Sin "Co-Authored-By" ni atribución de IA.
   tours, reservas puntuales (boliches/eventos/actividades), otros
   transportes, deploy público, CORS
   para prod.
+
+  Multi-city en SerpApi es progresivo, no un solo call. type=3 con multi_city_json solo da opciones del primer tramo (mismo shape que el paso 1 de round-trip: booking_token vacío, departure_token presente). Hay que encadenar search-return tramo por tramo hasta el último, que sí trae booking_token. El endpoint actual soporta 2 tramos limpio; 3+ tramos requeriría rediseñar search-return para aceptar N tramos en vez de un par fijo origin/destination — backlog, no MVP.
+
+  Mismo límite de 2 tramos en SerpApiFlightAdapter.get_booking_options(): deriva origin/destination/outbound_date/return_date de offer.journeys[0] y offer.journeys[1], asumiendo exactamente ida+vuelta. Para 3+ tramos de multi-city esa derivación no aplica — hay que revisarla junto con el rediseño de search-return de arriba.

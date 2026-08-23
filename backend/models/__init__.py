@@ -3,6 +3,7 @@ from .itinerary import Itinerary
 from .transportation import Transportation
 from .accommodations import Accommodations
 from .scrape_cache import ScrapeCache
+from .flights import Flight
 
 # Importar todos los modelos del traveler test
 from .traveler_test.question import Question
