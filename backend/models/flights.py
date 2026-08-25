@@ -17,5 +17,6 @@ class Flight(Base):
     passengers: Mapped[JSON] = mapped_column(JSON, nullable=False)
     journeys: Mapped[JSON] = mapped_column(JSON, nullable=False)
     booking_options: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    booking_token: Mapped[str] = mapped_column(String, nullable=False)
     provider: Mapped[str] = mapped_column(String, nullable=False, default="serpapi", server_default="serpapi")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

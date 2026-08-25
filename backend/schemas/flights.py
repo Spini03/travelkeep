@@ -40,9 +40,11 @@ class FlightOffer(BaseModel):
 
 class BookingOption(BaseModel):
     seller_name: str
-    booking_link: str
+    booking_link: str | None = None
+    post_data: str | None = None
     price: float
     baggage_info: str | None = None
+    booking_phone: str | None = None
 
 
 class SearchLeg(BaseModel):
@@ -85,6 +87,17 @@ class FlightSearchReturnRequest(BaseModel):
 class SaveFlightRequest(BaseModel):
     offer: FlightOffer
     passengers: PassengerCount
+
+
+class ResolveBookingOptionRequest(BaseModel):
+    seller_name: str
+
+
+class ResolveBookingOptionResponse(BaseModel):
+    resolved_url: str | None = None
+    seller_name: str
+    price: float
+    booking_phone: str | None = None
 
 
 class FlightResponse(BaseModel):

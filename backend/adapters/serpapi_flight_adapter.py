@@ -1,9 +1,12 @@
+import html
 import os
+import re
 import uuid
+import requests
 import serpapi
 from datetime import datetime
 
-from ports.flight_provider import FlightProvider, FlightSearchError
+from ports.flight_provider import FlightProvider, FlightSearchError, ResolveFailedError
 from schemas.flights import (
     FlightOffer, FlightSearchRequest, FlightSearchReturnRequest,
     BookingOption, FlightLeg, Journey,
@@ -11,6 +14,7 @@ from schemas.flights import (
 
 TRAVEL_CLASS_TO_SERPAPI = {"economy": 1, "premium_economy": 2, "business": 3, "first": 4}
 TRIP_TYPE_TO_SERPAPI = {"round_trip": 1, "one_way": 2, "multi_city": 3}
+META_REFRESH_URL_PATTERN = re.compile(r"url=['\"]([^'\"]+)['\"]")
 
 
 class SerpApiFlightAdapter:
@@ -143,12 +147,37 @@ class SerpApiFlightAdapter:
 
     def _map_booking_option(self, raw: dict) -> BookingOption:
         together = raw.get("together", raw)
-        book_with = together.get("book_with", "")
-        price = together.get("price", 0)
+        booking_request = together.get("booking_request")
         baggage_prices = together.get("baggage_prices")
         return BookingOption(
-            seller_name=book_with,
-            booking_link=together.get("booking_request", {}).get("url", "") or together.get("marketing_carrier", ""),
-            price=float(price),
+            seller_name=together.get("book_with", ""),
+            booking_link=booking_request.get("url") if booking_request else None,
+            post_data=booking_request.get("post_data") if booking_request else None,
+            price=float(together.get("price", 0)),
             baggage_info="; ".join(baggage_prices) if baggage_prices else None,
+            booking_phone=together.get("booking_phone"),
         )
+
+    def resolve_booking_link(self, booking_option: BookingOption) -> str:
+        response = requests.post(
+            booking_option.booking_link,
+            data=booking_option.post_data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            allow_redirects=True,
+        )
+        # Google's endpoint returns a client-side meta-refresh, not an HTTP redirect —
+        # requests only follows 3xx/Location, so the seller's real URL has to be parsed
+        # out of the HTML body instead of read off response.url.
+        match = META_REFRESH_URL_PATTERN.search(response.text)
+        if not match:
+            raise ResolveFailedError(
+                f"No se pudo extraer la URL de redirect del meta-refresh (status={response.status_code})"
+            )
+        redirect_url = html.unescape(match.group(1))
+
+        try:
+            final_response = requests.get(redirect_url, allow_redirects=True)
+        except requests.RequestException as e:
+            raise ResolveFailedError(f"Fallo al seguir el redirect a {redirect_url}: {e}") from e
+
+        return final_response.url

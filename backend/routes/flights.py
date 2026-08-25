@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas.flights import (
     FlightSearchRequest, FlightSearchReturnRequest, SaveFlightRequest,
-    FlightOffer, FlightResponse,
+    FlightOffer, FlightResponse, ResolveBookingOptionRequest, ResolveBookingOptionResponse,
 )
 from services.flights import get_flights_service
-from ports.flight_provider import FlightSearchError
+from ports.flight_provider import FlightSearchError, SellerNotAvailableError, ResolveFailedError
 
 flights_router = APIRouter(prefix="/api", tags=["flights"])
 
@@ -59,3 +59,19 @@ def delete_flight(flight_id: uuid.UUID, db: Session = Depends(get_db)) -> None:
     service = get_flights_service(db)
     if not service.delete(flight_id):
         raise HTTPException(status_code=404, detail="Flight not found")
+
+
+@flights_router.post("/flights/{flight_id}/booking-options/resolve")
+def resolve_booking_option(
+    flight_id: uuid.UUID, request: ResolveBookingOptionRequest, db: Session = Depends(get_db)
+) -> ResolveBookingOptionResponse:
+    service = get_flights_service(db)
+    try:
+        result = service.resolve_booking_option(flight_id, request.seller_name)
+    except SellerNotAvailableError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except (FlightSearchError, ResolveFailedError) as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    if result is None:
+        raise HTTPException(status_code=404, detail="Flight not found")
+    return result
