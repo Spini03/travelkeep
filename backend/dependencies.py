@@ -5,7 +5,6 @@ from services.user import UserService, get_user_service
 from models.user import User, UserRoleEnum
 from typing import Annotated, Optional
 from fastapi import status
-from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 from models.user import UserStatusEnum
 
 async def get_current_user(
@@ -54,5 +53,5 @@ async def get_current_user_optional(
         if not email:
             return None
         return user_service.get_user_by_email(email=email)
-    except (InvalidTokenError, ExpiredSignatureError):
+    except HTTPException:
         return None
