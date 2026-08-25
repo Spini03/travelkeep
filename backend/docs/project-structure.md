@@ -131,8 +131,9 @@ TravelSmart-AI-API/
 │   └── traveler_classifier_template.html # Traveler classification UI
 │
 ├── 📂 tools/                            # LangGraph tools & integrations
-│   ├── flights_finder.py                # Flight search integration
-│   └── hotels_finder.py                 # Hotel search integration
+│   ├── geocoding_tool.py                # Geocoding integration
+│   ├── web_search.py                    # Web search integration
+│   └── wikipedia_tool.py                # Wikipedia integration
 │
 ├── 📂 scripts/                          # Utility scripts
 │   ├── cleanup_soft_deletes.py          # Clean soft-deleted records
@@ -284,8 +285,9 @@ State management for LangGraph workflows.
 - `transportation_prompt.py` - Transportation prompts
 
 **`/tools`** - LangGraph tool integrations
-- `flights_finder.py` - Flight search API integration
-- `hotels_finder.py` - Hotel search API integration
+- `geocoding_tool.py` - Geocoding integration
+- `web_search.py` - Web search integration
+- `wikipedia_tool.py` - Wikipedia integration
 
 ### Utilities (`/utils`)
 
