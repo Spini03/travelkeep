@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy.orm import Session
 from models.flights import Flight
 from schemas.flights import (
-    FlightSearchRequest, FlightSearchReturnRequest, SaveFlightRequest,
+    FlightSearchRequest, SaveFlightRequest,
     FlightOffer, Journey, ResolveBookingOptionResponse,
 )
 from ports.flight_provider import FlightProvider, SellerNotAvailableError
@@ -15,9 +15,6 @@ class FlightService:
 
     def search(self, request: FlightSearchRequest) -> list[FlightOffer]:
         return self._provider.search(request)
-
-    def search_return(self, request: FlightSearchReturnRequest) -> list[FlightOffer]:
-        return self._provider.search_return(request)
 
     def save_flight(self, itinerary_id: uuid.UUID, request: SaveFlightRequest) -> Flight:
         booking_options = self._provider.get_booking_options(request.offer)
@@ -49,11 +46,23 @@ class FlightService:
         )
         booking_options = self._provider.get_booking_options(offer)
 
+        non_partial_options = [option for option in booking_options if not option.is_partial_ticket]
+
         matched = next(
-            (option for option in booking_options if option.seller_name.lower() == seller_name.lower()),
+            (option for option in non_partial_options if option.seller_name.lower() == seller_name.lower()),
             None,
         )
         if not matched:
+            was_only_partial = any(
+                option.seller_name.lower() == seller_name.lower()
+                for option in booking_options
+                if option.is_partial_ticket
+            )
+            if was_only_partial:
+                raise SellerNotAvailableError(
+                    f"'{seller_name}' solo está disponible como ticket parcial para este itinerario — "
+                    "no se puede reservar como vendedor único"
+                )
             raise SellerNotAvailableError(f"Seller '{seller_name}' no disponible, precios pueden haber cambiado")
 
         resolved_url = None

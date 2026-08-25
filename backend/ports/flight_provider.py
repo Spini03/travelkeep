@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from schemas.flights import FlightOffer, FlightSearchRequest, FlightSearchReturnRequest, BookingOption
+from schemas.flights import FlightOffer, FlightSearchRequest, BookingOption
 
 
 class FlightSearchError(Exception):
@@ -17,6 +17,5 @@ class ResolveFailedError(Exception):
 
 class FlightProvider(Protocol):
     def search(self, request: FlightSearchRequest) -> list[FlightOffer]: ...
-    def search_return(self, request: FlightSearchReturnRequest) -> list[FlightOffer]: ...
     def get_booking_options(self, offer: FlightOffer) -> list[BookingOption]: ...
     def resolve_booking_link(self, booking_option: BookingOption) -> str: ...

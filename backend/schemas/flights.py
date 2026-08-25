@@ -45,6 +45,7 @@ class BookingOption(BaseModel):
     price: float
     baggage_info: str | None = None
     booking_phone: str | None = None
+    is_partial_ticket: bool = False
 
 
 class SearchLeg(BaseModel):
@@ -59,6 +60,7 @@ class FlightSearchRequest(BaseModel):
     return_date: date | None = None
     passengers: PassengerCount
     travel_class: Literal["economy", "premium_economy", "business", "first"] = "economy"
+    departure_token: str | None = None
 
     @model_validator(mode="after")
     def validate_legs_for_trip_type(self):
@@ -68,20 +70,12 @@ class FlightSearchRequest(BaseModel):
         elif self.trip_type == "one_way":
             if len(self.legs) != 1 or self.return_date is not None:
                 raise ValueError("one_way requiere 1 leg y sin return_date")
+            if self.departure_token is not None:
+                raise ValueError("one_way no admite departure_token (no tiene continuación)")
         elif self.trip_type == "multi_city":
             if len(self.legs) < 2 or self.return_date is not None:
                 raise ValueError("multi_city requiere 2+ legs y sin return_date")
         return self
-
-
-class FlightSearchReturnRequest(BaseModel):
-    departure_token: str
-    origin: str
-    destination: str
-    outbound_date: date
-    return_date: date
-    passengers: PassengerCount
-    travel_class: str = "economy"
 
 
 class SaveFlightRequest(BaseModel):

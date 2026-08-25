@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas.flights import (
-    FlightSearchRequest, FlightSearchReturnRequest, SaveFlightRequest,
+    FlightSearchRequest, SaveFlightRequest,
     FlightOffer, FlightResponse, ResolveBookingOptionRequest, ResolveBookingOptionResponse,
 )
 from services.flights import get_flights_service
@@ -17,15 +17,6 @@ def search_flights(request: FlightSearchRequest, db: Session = Depends(get_db)) 
     service = get_flights_service(db)
     try:
         return service.search(request)
-    except FlightSearchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
-
-
-@flights_router.post("/flights/search-return")
-def search_return_flights(request: FlightSearchReturnRequest, db: Session = Depends(get_db)) -> list[FlightOffer]:
-    service = get_flights_service(db)
-    try:
-        return service.search_return(request)
     except FlightSearchError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
