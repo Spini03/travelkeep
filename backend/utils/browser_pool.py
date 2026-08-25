@@ -64,7 +64,10 @@ class _BrowserWorker:
                     future.set_exception(e)
                 else:
                     future.set_result(result)
-            browser.close()
+            try:
+                browser.close()
+            except Exception as e:  # noqa: BLE001 - uvicorn --reload en Windows mata el proceso antes del cleanup graceful
+                logger.debug("Playwright worker %d: error closing browser during shutdown: %s", self.worker_id, e)
             logger.info("Playwright worker %d closed", self.worker_id)
 
     def submit(self, func: Callable[[Browser], T]) -> T:
