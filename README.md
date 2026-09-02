@@ -12,18 +12,18 @@
 
 ## Overview
 
-TravelKeep es una herramienta para centralizar la planificación de un viaje: itinerarios generados con IA o armados a mano, chat conversacional, test de perfil de viajero, alojamiento, vuelos y tours en un solo lugar. Hoy es de uso personal — lo construye y usa Santiago para sus propios viajes — y solo se despliega públicamente si el uso propio valida que funciona bien, con roadmap hacia multi-tenant.
+TravelKeep es una herramienta para centralizar la planificación de un viaje: itinerarios generados con IA o armados a mano, chat conversacional, test de perfil de viajero, alojamiento, vuelos y tours en un solo lugar. Hoy es de uso personal - lo construye y usa Santiago para sus propios viajes - y solo se despliega públicamente si el uso propio valida que funciona bien, con roadmap hacia multi-tenant.
 
 ## Features
 
 **MVP funcional:**
 - 🧳 Itinerarios de viaje (generación con IA + edición manual), con persistencia
 - 💬 Chat IA sobre el itinerario (agentes LangGraph/LangChain, checkpointer persistente en Postgres)
-- 🧠 Traveler test — perfil de viajero que alimenta la generación de itinerarios
-- 🏨 Alojamiento — scraping de plataformas (Playwright) con caché cache-aside
-- ✈️ Vuelos — búsqueda y booking options vía SerpApi (round-trip, one-way y multi-city)
-- 🎟️ Tours y actividades — scraping de GetYourGuide
-- 🔐 Autenticación — JWT propio + Google OAuth, modo invitado por sesión
+- 🧠 Traveler test - perfil de viajero que alimenta la generación de itinerarios
+- 🏨 Alojamiento - scraping de plataformas (Playwright) con caché cache-aside
+- ✈️ Vuelos - búsqueda y booking options vía SerpApi (round-trip, one-way y multi-city)
+- 🎟️ Tours y actividades - scraping de GetYourGuide
+- 🔐 Autenticación - JWT propio + Google OAuth, modo invitado por sesión
 
 **Roadmap:**
 - Reservas puntuales (boliches, eventos, actividades)
@@ -47,7 +47,7 @@ TravelKeep es una herramienta para centralizar la planificación de un viaje: it
 
 ## Arquitectura
 
-Backend en **flat layered**: `routes/` → `services/` → `models/`, con `graphs/` como capa paralela para los agentes de IA (sin repositorios intermedios, los services usan SQLAlchemy `Session` directo). Para integraciones externas *nuevas* (vuelos, tours) se define una interfaz `Protocol` en `ports/` con su implementación en `adapters/` — las integraciones más viejas (scraping de alojamiento, OAuth, LLM) no se migraron retroactivamente a este patrón.
+Backend en **flat layered**: `routes/` → `services/` → `models/`, con `graphs/` como capa paralela para los agentes de IA (sin repositorios intermedios, los services usan SQLAlchemy `Session` directo). Para integraciones externas *nuevas* (vuelos, tours) se define una interfaz `Protocol` en `ports/` con su implementación en `adapters/` - las integraciones más viejas (scraping de alojamiento, OAuth, LLM) no se migraron retroactivamente a este patrón.
 
 Más detalle de convenciones y decisiones de arquitectura en [AGENTS.md](AGENTS.md).
 
@@ -104,8 +104,8 @@ La app queda disponible en `http://localhost:3000`.
 
 ## Variables de entorno
 
-- Backend: [`backend/env.example`](backend/env.example) — DB, JWT, Google OAuth, OpenAI/Gemini, SerpApi, Mapbox, SMTP.
-- Frontend: `frontend/frontend/.env.example` — URL base de la API (`NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_ROOT_BASE_URL`) y token público de Mapbox (`NEXT_PUBLIC_MAPBOX_API_TOKEN`).
+- Backend: [`backend/env.example`](backend/env.example) - DB, JWT, Google OAuth, OpenAI/Gemini, SerpApi, Mapbox, SMTP.
+- Frontend: `frontend/frontend/.env.example` - URL base de la API (`NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_ROOT_BASE_URL`) y token público de Mapbox (`NEXT_PUBLIC_MAPBOX_API_TOKEN`).
 
 En ambos casos, copiá el archivo a `.env` (backend) o `.env.local` (frontend) y completá con tus propias claves.
 
@@ -115,8 +115,8 @@ Ver sección [Features](#features) arriba y el backlog completo en [AGENTS.md](A
 
 ## Licencia
 
-MIT — ver [LICENSE](LICENSE).
+MIT - ver [LICENSE](LICENSE).
 
 ## Autor
 
-**Santiago Spini** — [github.com/Spini03/travelkeep](https://github.com/Spini03/travelkeep)
+**Santiago Spini** - [github.com/Spini03/travelkeep](https://github.com/Spini03/travelkeep)
