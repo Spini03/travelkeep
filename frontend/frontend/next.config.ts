@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.getyourguide.com", // GetYourGuide CDN for tour images
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

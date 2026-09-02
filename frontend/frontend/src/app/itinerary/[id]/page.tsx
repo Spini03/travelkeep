@@ -20,6 +20,8 @@ import {
 import { AccommodationResponse } from "@/types/accommodation";
 import { searchFlights, saveFlight, resolveBookingOption } from "@/lib/flightApi";
 import { FlightOffer } from "@/types/flight";
+import { searchTours } from "@/lib/toursApi";
+import { TourResult, TourSearchStatus } from "@/types/tour";
 import { getAirportCode } from "@/lib/airportCodes";
 import { FloatingEditButton, Button, Input } from "@/components";
 import { Card, CardContent, CardTitle, Skeleton } from "@/components/ui";
@@ -117,6 +119,16 @@ export default function ItineraryDetailsPage() {
   >({});
   const [bookingLoadingByOfferId, setBookingLoadingByOfferId] = useState<Record<string, boolean>>({});
   const [bookingErrorByOfferId, setBookingErrorByOfferId] = useState<Record<string, string>>({});
+  // Tours per destination (search/listing-only MVP, lazy fetch on first tab open)
+  const [tourResultsByDest, setTourResultsByDest] = useState<
+    Record<number, TourResult[]>
+  >({});
+  const [tourSearchStatusByDest, setTourSearchStatusByDest] = useState<
+    Record<number, TourSearchStatus>
+  >({});
+  const [tourFallbackUrlByDest, setTourFallbackUrlByDest] = useState<
+    Record<number, string | null>
+  >({});
   // Toggle state for accommodation suggestions per destination index
   const [openAccommodationSuggestions, setOpenAccommodationSuggestions] =
     useState<Record<number, boolean>>({});
@@ -342,6 +354,39 @@ export default function ItineraryDetailsPage() {
       fetchSavedAccommodations(false);
     }
   }, [activeTab, fetchSavedAccommodations]);
+
+  // Search tours for a single destination city
+  const handleSearchToursForDest = useCallback(
+    async (idx: number, city: string) => {
+      setTourSearchStatusByDest((prev) => ({ ...prev, [idx]: "loading" }));
+      const { data, error } = await searchTours(city);
+      if (error || !data) {
+        setTourSearchStatusByDest((prev) => ({ ...prev, [idx]: "error" }));
+        return;
+      }
+      if (data.results.length === 0) {
+        setTourFallbackUrlByDest((prev) => ({
+          ...prev,
+          [idx]: data.fallback_search_url,
+        }));
+        setTourSearchStatusByDest((prev) => ({ ...prev, [idx]: "empty" }));
+        return;
+      }
+      setTourResultsByDest((prev) => ({ ...prev, [idx]: data.results }));
+      setTourSearchStatusByDest((prev) => ({ ...prev, [idx]: "loaded" }));
+    },
+    []
+  );
+
+  // Fetch tours for each destino, lazily, the first time the Tours tab opens
+  useEffect(() => {
+    if (activeTab !== "tours" || !currentItinerary) return;
+    currentItinerary.details_itinerary.destinos.forEach((dest, idx) => {
+      if (!tourSearchStatusByDest[idx]) {
+        handleSearchToursForDest(idx, dest.ciudad);
+      }
+    });
+  }, [activeTab, currentItinerary, tourSearchStatusByDest, handleSearchToursForDest]);
 
   // Sync activeTab with URL query param
   useEffect(() => {
@@ -836,6 +881,12 @@ export default function ItineraryDetailsPage() {
                       className="rounded-full px-4 py-2 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-700"
                     >
                       Alojamientos
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="tours"
+                      className="rounded-full px-4 py-2 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-700"
+                    >
+                      Tours
                     </TabsTrigger>
                     <TabsTrigger
                       value="itinerary"
@@ -2030,6 +2081,153 @@ export default function ItineraryDetailsPage() {
                       )}
                     </div>
                   ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="tours">
+                <div className="space-y-4">
+                  {details_itinerary.destinos.map((dest, idx) => {
+                    const status = tourSearchStatusByDest[idx];
+                    const tours = tourResultsByDest[idx] ?? [];
+                    const fallbackUrl = tourFallbackUrlByDest[idx];
+                    return (
+                      <div
+                        key={`tour-${idx}`}
+                        className="rounded-2xl border border-gray-100 p-5 bg-white shadow-sm hover:shadow-md transition-colors"
+                      >
+                        <div className="flex items-center mb-3">
+                          <div className="inline-flex w-8 h-8 items-center justify-center rounded-full bg-sky-100 text-sky-600 mr-3">
+                            <MapPinIcon className="w-4 h-4" />
+                          </div>
+                          <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+                            {dest.ciudad}
+                          </h2>
+                        </div>
+
+                        <div className="ml-11">
+                          <div className="h-px bg-gray-200 mb-4"></div>
+
+                          {status === "error" && (
+                            <div className="text-sm text-gray-600">
+                              No pudimos cargar los tours de {dest.ciudad}.{" "}
+                              <button
+                                type="button"
+                                className="text-sky-600 hover:underline"
+                                onClick={() =>
+                                  handleSearchToursForDest(idx, dest.ciudad)
+                                }
+                              >
+                                Reintentar
+                              </button>
+                            </div>
+                          )}
+
+                          {status === "empty" && (
+                            <div className="text-sm text-gray-500">
+                              No encontramos tours para esta ciudad.{" "}
+                              {fallbackUrl && (
+                                <a
+                                  href={fallbackUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sky-600 hover:underline"
+                                >
+                                  Buscar en GetYourGuide
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {(status === "loading" || tours.length > 0) && (
+                            <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                              <div className="flex pb-4 gap-4 pt-3">
+                                {status === "loading" &&
+                                  tours.length === 0 &&
+                                  [0, 1, 2].map((skeletonIdx) => (
+                                    <div
+                                      key={`tour-skeleton-${idx}-${skeletonIdx}`}
+                                      className="relative w-56 flex-none"
+                                    >
+                                      <Card className="rounded-xl overflow-hidden border border-gray-100 shadow-sm pt-0">
+                                        <div className="relative h-40 w-full bg-gray-100 overflow-hidden">
+                                          <Skeleton className="h-full w-full" />
+                                        </div>
+                                        <CardContent>
+                                          <CardTitle className="text-sm font-semibold truncate">
+                                            <Skeleton className="h-4 w-3/4" />
+                                          </CardTitle>
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            <Skeleton className="h-3 w-1/2" />
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    </div>
+                                  ))}
+                                {tours.map((tour, tourIdx) => (
+                                  <div
+                                    key={`${idx}-tour-${tourIdx}`}
+                                    className="relative w-56 flex-none"
+                                  >
+                                    <Card className="rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow pt-0">
+                                      <div className="relative h-40 w-full bg-gray-100 overflow-hidden">
+                                        {tour.image_url ? (
+                                          <Image
+                                            src={tour.image_url}
+                                            alt={tour.title}
+                                            className="h-full w-full object-cover"
+                                            loading="lazy"
+                                            fill
+                                            sizes="224px"
+                                          />
+                                        ) : (
+                                          <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
+                                        )}
+                                      </div>
+                                      <CardContent>
+                                        <CardTitle className="text-sm font-semibold truncate">
+                                          {tour.title}
+                                        </CardTitle>
+                                        <div className="text-xs text-gray-700 mt-1 font-medium">
+                                          {tour.currency} {tour.price}
+                                        </div>
+                                        {tour.rating != null && (
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            ★ {tour.rating}
+                                            {tour.review_count != null &&
+                                              ` (${tour.review_count})`}
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-1 mt-1">
+                                          {tour.category && (
+                                            <span className="text-[11px] text-gray-500">
+                                              {tour.category}
+                                            </span>
+                                          )}
+                                          {tour.duration && (
+                                            <span className="text-[11px] text-gray-500">
+                                              {tour.duration}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <a
+                                          href={tour.external_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center mt-2 text-xs font-medium text-sky-600 hover:underline"
+                                        >
+                                          Ver más
+                                        </a>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </TabsContent>
             </Tabs>
