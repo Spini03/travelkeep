@@ -21,7 +21,7 @@ cd backend
 pip install -r requirements.txt
 playwright install chromium   # paso extra, no lo cubre pip install -r requirements.txt
 alembic upgrade head
-uvicorn main:app --reload --reload-exclude "venv/*" --port 8001
+uvicorn main:app --reload --reload-exclude venv --port 8001
  
 # Frontend (ojo: carpeta anidada frontend/frontend)
 cd frontend\frontend
@@ -91,7 +91,9 @@ npm run type-check  # tsc --noEmit
   adentro de `backend/`) — Python escribe `.pyc` ahí todo el tiempo y
   `WatchFiles` los toma como cambios, reiniciando el server sin parar y
   dejando procesos/puertos fantasma. El comando de arriba ya incluye
-  `--reload-exclude "venv/*"` — no lo saques.
+  `--reload-exclude venv` — no lo saques. Ojo: `"venv/*"` con comillas
+  también rompe en PowerShell 5.1 (glob-expande el wildcard antes de que
+  uvicorn lo reciba) — usar `venv` a secas, sin `/*` ni comillas.
 - `get_current_user_optional` (dependencies.py) necesita su propio
   `HTTPBearer(auto_error=False)` (`bearer_scheme_optional` en
   `services/jwt_service.py`) — si comparte el `bearer_scheme` normal
@@ -131,7 +133,7 @@ npm run type-check  # tsc --noEmit
   configurados y funcionan.
 ## Verify changes
  
-1. Backend: levantar server (`uvicorn main:app --reload --reload-exclude "venv/*" --port 8001`), probar
+1. Backend: levantar server (`uvicorn main:app --reload --reload-exclude venv --port 8001`), probar
    endpoint afectado manualmente.
 2. Frontend: `npm run lint` + `npm run type-check`, luego probar en
    `localhost:3000`.
