@@ -87,10 +87,10 @@ pip install -r requirements.txt
 playwright install chromium
 cp env.example .env           # completar con tus propias claves
 alembic upgrade head
-uvicorn main:app --reload --reload-exclude venv --port 8001
+uvicorn main:app --reload --reload-exclude venv --port 8002
 ```
 
-La API queda disponible en `http://localhost:8001` (docs interactivas en `/docs`).
+La API queda disponible en `http://localhost:8002` (docs interactivas en `/docs`).
 
 ### Frontend
 
@@ -104,7 +104,10 @@ La app queda disponible en `http://localhost:3000`.
 
 ## Variables de entorno
 
-El backend incluye [`backend/env.example`](backend/env.example) como plantilla (DB, JWT, Google OAuth, OpenAI/Gemini, SerpApi, Mapbox, SMTP). El frontend **todavía no tiene un archivo de ejemplo** — si lo necesitás, pedímelo y lo armamos a partir de las variables que ya usa el código.
+- Backend: [`backend/env.example`](backend/env.example) — DB, JWT, Google OAuth, OpenAI/Gemini, SerpApi, Mapbox, SMTP.
+- Frontend: `frontend/frontend/.env.example` — URL base de la API (`NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_ROOT_BASE_URL`) y token público de Mapbox (`NEXT_PUBLIC_MAPBOX_API_TOKEN`).
+
+En ambos casos, copiá el archivo a `.env` (backend) o `.env.local` (frontend) y completá con tus propias claves.
 
 ## Roadmap
 
