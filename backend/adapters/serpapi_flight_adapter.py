@@ -54,8 +54,11 @@ class SerpApiFlightAdapter:
             base["arrival_id"] = outbound_journey.legs[-1].arrival_airport_code
             base["outbound_date"] = outbound_journey.legs[0].departure_time.date().isoformat()
             if len(offer.journeys) > 1:
+                base["type"] = TRIP_TYPE_TO_SERPAPI["round_trip"]
                 return_journey = offer.journeys[1]
                 base["return_date"] = return_journey.legs[0].departure_time.date().isoformat()
+            else:
+                base["type"] = TRIP_TYPE_TO_SERPAPI["one_way"]
         else:
             # Hipótesis sin confirmar en doc de SerpApi (sin ejemplo de booking_token
             # para multi-city de 3+ tramos): mismo patrón que _build_search_params()

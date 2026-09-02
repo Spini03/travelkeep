@@ -10,7 +10,7 @@ import { useChatActions } from "@/hooks/useChatActions";
 import { useToast } from "@/contexts/ToastContext";
 import { ChatPanel } from "@/components/chat";
 import { apiRequest } from "@/lib/api";
-import { parseLocalDate } from "@/lib/utils";
+import { parseLocalDate, toLocalDateString } from "@/lib/utils";
 import {
   listAccommodationsByItineraryAndCity,
   createAccommodation,
@@ -18,6 +18,9 @@ import {
   retryAccommodationScrape,
 } from "@/lib/accommodationApi";
 import { AccommodationResponse } from "@/types/accommodation";
+import { searchFlights, saveFlight, resolveBookingOption } from "@/lib/flightApi";
+import { FlightOffer } from "@/types/flight";
+import { getAirportCode } from "@/lib/airportCodes";
 import { FloatingEditButton, Button, Input } from "@/components";
 import { Card, CardContent, CardTitle, Skeleton } from "@/components/ui";
 import {
@@ -107,6 +110,13 @@ export default function ItineraryDetailsPage() {
   const [openAlternatives, setOpenAlternatives] = useState<
     Record<number, boolean>
   >({});
+  const [openFlightOptions, setOpenFlightOptions] = useState<Record<number, boolean>>({});
+  const [flightOffersByLeg, setFlightOffersByLeg] = useState<Record<number, FlightOffer[]>>({});
+  const [flightSearchStatusByLeg, setFlightSearchStatusByLeg] = useState<
+    Record<number, "loading" | "error" | "empty" | "loaded">
+  >({});
+  const [bookingLoadingByOfferId, setBookingLoadingByOfferId] = useState<Record<string, boolean>>({});
+  const [bookingErrorByOfferId, setBookingErrorByOfferId] = useState<Record<string, string>>({});
   // Toggle state for accommodation suggestions per destination index
   const [openAccommodationSuggestions, setOpenAccommodationSuggestions] =
     useState<Record<number, boolean>>({});
@@ -451,6 +461,138 @@ export default function ItineraryDetailsPage() {
     } catch {
       // no-op
     }
+  };
+
+  const getFlightLegDate = (destinationCity: string): Date | undefined => {
+    const destinos = currentItinerary?.details_itinerary?.destinos ?? [];
+    const idx = destinos.findIndex(
+      (d) => d.ciudad.trim().toLowerCase() === destinationCity.trim().toLowerCase()
+    );
+    if (idx === -1) return undefined;
+    return destinationDateRanges[idx]?.start;
+  };
+
+  const handleSearchFlightsForLeg = async (
+    idx: number,
+    originCity: string,
+    destinationCity: string
+  ) => {
+    const originCode = getAirportCode(originCity);
+    const destinationCode = getAirportCode(destinationCity);
+    const flightDate = getFlightLegDate(destinationCity);
+    if (!originCode || !destinationCode || !flightDate) {
+      setFlightSearchStatusByLeg((prev) => ({ ...prev, [idx]: "error" }));
+      return;
+    }
+
+    setFlightSearchStatusByLeg((prev) => ({ ...prev, [idx]: "loading" }));
+    const { data, error } = await searchFlights({
+      trip_type: "one_way",
+      legs: [
+        {
+          origin: originCode,
+          destination: destinationCode,
+          date: toLocalDateString(flightDate),
+        },
+      ],
+      passengers: {
+        adults: currentItinerary?.travelers_count || 1,
+        children: 0,
+        infants_in_seat: 0,
+        infants_on_lap: 0,
+      },
+    });
+
+    if (error || !data) {
+      setFlightSearchStatusByLeg((prev) => ({ ...prev, [idx]: "error" }));
+      return;
+    }
+    if (data.length === 0) {
+      setFlightSearchStatusByLeg((prev) => ({ ...prev, [idx]: "empty" }));
+      return;
+    }
+    setFlightOffersByLeg((prev) => ({ ...prev, [idx]: data }));
+    setFlightSearchStatusByLeg((prev) => ({ ...prev, [idx]: "loaded" }));
+  };
+
+  const handleToggleFlightOptions = (
+    idx: number,
+    originCity: string,
+    destinationCity: string
+  ) => {
+    setOpenFlightOptions((prev) => {
+      const next = { ...prev, [idx]: !prev[idx] };
+      if (next[idx] && !flightSearchStatusByLeg[idx]) {
+        handleSearchFlightsForLeg(idx, originCity, destinationCity);
+      }
+      return next;
+    });
+  };
+
+  const handleBookFlight = async (offer: FlightOffer) => {
+    setBookingLoadingByOfferId((prev) => ({ ...prev, [offer.id]: true }));
+    setBookingErrorByOfferId((prev) => {
+      const next = { ...prev };
+      delete next[offer.id];
+      return next;
+    });
+
+    const { data: savedFlight, error: saveError } = await saveFlight(itineraryId, {
+      offer,
+      passengers: {
+        adults: currentItinerary?.travelers_count || 1,
+        children: 0,
+        infants_in_seat: 0,
+        infants_on_lap: 0,
+      },
+    });
+
+    if (saveError || !savedFlight) {
+      setBookingErrorByOfferId((prev) => ({
+        ...prev,
+        [offer.id]: "No se pudo guardar el vuelo seleccionado",
+      }));
+      setBookingLoadingByOfferId((prev) => ({ ...prev, [offer.id]: false }));
+      return;
+    }
+
+    const chosenOption = savedFlight.booking_options.find((o) => !o.is_partial_ticket);
+    if (!chosenOption) {
+      setBookingErrorByOfferId((prev) => ({
+        ...prev,
+        [offer.id]: "No hay opciones de reserva disponibles para este vuelo",
+      }));
+      setBookingLoadingByOfferId((prev) => ({ ...prev, [offer.id]: false }));
+      return;
+    }
+
+    const { data: resolved, error: resolveError } = await resolveBookingOption(
+      savedFlight.id,
+      chosenOption.seller_name
+    );
+
+    if (resolveError || !resolved?.resolved_url) {
+      setBookingErrorByOfferId((prev) => ({
+        ...prev,
+        [offer.id]: resolved?.booking_phone
+          ? `No se pudo obtener el link de reserva — llamar al ${resolved.booking_phone}`
+          : "No se pudo obtener el link de reserva",
+      }));
+      setBookingLoadingByOfferId((prev) => ({ ...prev, [offer.id]: false }));
+      return;
+    }
+
+    window.open(resolved.resolved_url, "_blank", "noopener,noreferrer");
+    setBookingLoadingByOfferId((prev) => ({ ...prev, [offer.id]: false }));
+  };
+
+  const formatFlightTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+  const formatFlightDuration = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
   };
 
   const handleGenerateDailyActivities = async () => {
@@ -1433,6 +1575,128 @@ export default function ItineraryDetailsPage() {
                                   </ul>
                                 ) : null}
                               </div>
+                              {t.tipo_transporte === "Avión" && (() => {
+                                const originCode = getAirportCode(t.ciudad_origen);
+                                const destinationCode = getAirportCode(t.ciudad_destino);
+                                const flightDate = getFlightLegDate(t.ciudad_destino);
+                                const isAvailable = !!originCode && !!destinationCode && !!flightDate;
+                                const status = flightSearchStatusByLeg[idx];
+                                const offers = flightOffersByLeg[idx] ?? [];
+
+                                return (
+                                  <div className="mt-2">
+                                    <button
+                                      className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 text-sm px-3 py-1 rounded-full border border-gray-200 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-600 disabled:hover:border-gray-200"
+                                      onClick={() => handleToggleFlightOptions(idx, t.ciudad_origen, t.ciudad_destino)}
+                                      disabled={!isAvailable}
+                                      title={!isAvailable ? "Aeropuerto no disponible para esta ciudad" : undefined}
+                                      aria-expanded={!!openFlightOptions[idx]}
+                                      aria-controls={`flight-options-${idx}`}
+                                    >
+                                      {openFlightOptions[idx] ? (
+                                        <ChevronUpIcon className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronDownIcon className="h-4 w-4" />
+                                      )}
+                                      <PlaneIcon className="h-4 w-4" />
+                                      Opciones de vuelo
+                                    </button>
+
+                                    {openFlightOptions[idx] && (
+                                      <div id={`flight-options-${idx}`} className="mt-3">
+                                        {status === "loading" && (
+                                          <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                            <div className="flex pb-4 gap-4 pt-1">
+                                              {[0, 1, 2].map((i) => (
+                                                <div key={`flight-skeleton-${idx}-${i}`} className="w-64 flex-none">
+                                                  <Card className="rounded-xl overflow-hidden border border-gray-100 shadow-sm pt-0">
+                                                    <CardContent className="pt-4">
+                                                      <CardTitle className="text-sm font-semibold truncate">
+                                                        <Skeleton className="h-4 w-3/4" />
+                                                      </CardTitle>
+                                                      <div className="text-xs text-gray-500 mt-2">
+                                                        <Skeleton className="h-3 w-1/2" />
+                                                      </div>
+                                                      <div className="text-xs text-gray-500 mt-2">
+                                                        <Skeleton className="h-3 w-2/3" />
+                                                      </div>
+                                                    </CardContent>
+                                                  </Card>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {status === "error" && (
+                                          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                                            <AlertTriangleIcon className="h-4 w-4 flex-none" />
+                                            No se pudieron cargar opciones de vuelo para este tramo.
+                                          </div>
+                                        )}
+
+                                        {status === "empty" && (
+                                          <div className="text-sm text-gray-500 px-1">
+                                            No se encontraron vuelos para este tramo.
+                                          </div>
+                                        )}
+
+                                        {status === "loaded" && offers.length > 0 && (
+                                          <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                            <div className="flex pb-4 gap-4 pt-1">
+                                              {offers.map((offer) => {
+                                                const journey = offer.journeys[0];
+                                                const firstLeg = journey.legs[0];
+                                                const lastLeg = journey.legs[journey.legs.length - 1];
+                                                const stops = journey.legs.length - 1;
+                                                const isBooking = !!bookingLoadingByOfferId[offer.id];
+                                                const bookError = bookingErrorByOfferId[offer.id];
+
+                                                return (
+                                                  <div key={offer.id} className="w-64 flex-none">
+                                                    <Card className="rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow pt-0">
+                                                      <CardContent className="pt-4">
+                                                        <CardTitle className="text-sm font-semibold truncate">
+                                                          {firstLeg.airline}
+                                                        </CardTitle>
+                                                        <div className="text-xs text-gray-500 mt-1">
+                                                          {stops > 0 ? `${stops} escala${stops > 1 ? "s" : ""}` : "Directo"} ·{" "}
+                                                          {formatFlightDuration(journey.duration_minutes)}
+                                                        </div>
+                                                        <div className="text-sm text-gray-900 mt-2 font-medium">
+                                                          {formatFlightTime(firstLeg.departure_time)} → {formatFlightTime(lastLeg.arrival_time)}
+                                                        </div>
+                                                        <div className="text-base font-semibold text-gray-900 mt-2">
+                                                          {offer.currency} {offer.price.toFixed(0)}
+                                                        </div>
+                                                        <Button
+                                                          className="rounded-full bg-sky-500 hover:bg-sky-700 w-full mt-3"
+                                                          size="sm"
+                                                          onClick={() => handleBookFlight(offer)}
+                                                          disabled={isBooking}
+                                                        >
+                                                          {isBooking ? (
+                                                            <Loader2Icon className="h-4 w-4 animate-spin" />
+                                                          ) : (
+                                                            "Reservar"
+                                                          )}
+                                                        </Button>
+                                                        {bookError && (
+                                                          <div className="text-xs text-red-600 mt-2">{bookError}</div>
+                                                        )}
+                                                      </CardContent>
+                                                    </Card>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         ))
