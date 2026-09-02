@@ -3,7 +3,7 @@ from sqlalchemy import and_, or_, func
 from fastapi import Depends
 from models.user import User, UserStatusEnum, UserRoleEnum, UserSocialAccount, AuthProviderType
 from schemas.user import UserUpdate
-from services.jwt_service import JWTService, get_token_service
+from services.jwt_service import JWTService, get_token_service, TokenPair
 from database import get_db
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -256,6 +256,8 @@ class UserService:
 
     def process_google_login(self, user_info: dict):
 
+        google_email_verified = bool(user_info.get('email_verified'))
+
         user = self.get_user_by_email(user_info['email'])
         if not user:
             user = User(
@@ -264,6 +266,8 @@ class UserService:
                 first_name=user_info['given_name'],
                 last_name=user_info['family_name'],
                 profile_picture_url=user_info['picture'],
+                email_verified=google_email_verified,
+                email_verified_at=datetime.utcnow() if google_email_verified else None,
             )
             self.create_user(user)
         else:
@@ -274,6 +278,15 @@ class UserService:
                 profile_picture_url=user.profile_picture_url or user_info['picture'],
             )
             self.update_user(user, user_update)
+
+            # UserUpdate doesn't carry email_verified (that field is only ever
+            # set by our own verification flows), so Google's verified status
+            # is applied directly here instead of going through update_user.
+            if google_email_verified and not user.email_verified:
+                user.email_verified = True
+                user.email_verified_at = user.email_verified_at or datetime.utcnow()
+                self.db.commit()
+                self.db.refresh(user)
 
         user_social_account = self.get_user_social_account(user_info['sub'])
         if not user_social_account:
@@ -297,11 +310,11 @@ class UserService:
 
         # Create new app access token
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = self.token_service.create_access_token(
+        access_token, expires_in = self.token_service.create_access_token(
             data={"sub": user_info['email']}, expires_delta=access_token_expires
         )
         refresh_token = self.token_service.create_refresh_token(data={"sub": user_info['email']})
-        return access_token, refresh_token
+        return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer", expires_in=expires_in)
         
     # ==================== STATISTICS AND ANALYTICS ====================
     

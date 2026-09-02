@@ -160,16 +160,26 @@ async def callback_via_google(
     if not token:
         raise HTTPException(status_code=400, detail="No token returned from Google")
     
-    # access_token, refresh_token = user_service.process_google_login(token['userinfo'])
-    # return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
-
-    token = token_service.create_google_verification_token(data={"sub": token['userinfo']['email']})
-    # return token
+    userinfo = token['userinfo']
+    google_token_data = {
+        "sub": userinfo['email'],
+        "google_sub": userinfo['sub'],
+        "name": userinfo.get('name'),
+        "given_name": userinfo.get('given_name'),
+        "family_name": userinfo.get('family_name'),
+        "picture": userinfo.get('picture'),
+        "email_verified": userinfo.get('email_verified', False),
+    }
+    token = token_service.create_google_verification_token(data=google_token_data)
     return RedirectResponse(f"{FRONTEND_URL}/login/google-validate?token={token}")
 
 
 @auth_router.get("/google/verify-token/")
-async def verify_google_token(token: str, token_service: JWTService = Depends(get_token_service)):
+async def verify_google_token(
+    token: str,
+    token_service: JWTService = Depends(get_token_service),
+    user_service: UserService = Depends(get_user_service),
+):
     payload = token_service.validate_google_verified_token(token)
     if not payload:
         raise HTTPException(
@@ -178,9 +188,14 @@ async def verify_google_token(token: str, token_service: JWTService = Depends(ge
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    email = payload.get("sub")
-    data = {"sub": email}
-    access_token, expires_in = token_service.create_access_token(data=data)
-    refresh_token = token_service.create_refresh_token(data=data)
-    return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer", expires_in=expires_in)
+    user_info = {
+        "email": payload.get("sub"),
+        "sub": payload.get("google_sub"),
+        "name": payload.get("name"),
+        "given_name": payload.get("given_name"),
+        "family_name": payload.get("family_name"),
+        "picture": payload.get("picture"),
+        "email_verified": payload.get("email_verified", False),
+    }
+    return user_service.process_google_login(user_info)
 
