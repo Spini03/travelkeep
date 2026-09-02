@@ -110,7 +110,7 @@ export default function RegisterForm({
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-bold tracking-tight">Crea tu cuenta</h2>
         <p className="text-sm text-muted-foreground">
-          Únete a TravelSmart y comienza a planear tus viajes perfectos
+          Únete a TravelKeep y comienza a planear tus viajes perfectos
         </p>
       </div>
 

@@ -70,7 +70,7 @@ export default function EmailVerificationPending({
           </CardTitle>
           <CardDescription>
             Haz clic en el enlace de verificación en tu correo para completar tu
-            registro y empezar a usar TravelSmart.
+            registro y empezar a usar TravelKeep.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -129,10 +129,10 @@ export default function EmailVerificationPending({
         <p>
           ¿Tienes problemas? Contacta a nuestro equipo de soporte en{" "}
           <a
-            href="mailto:support@travelsmart.com"
+            href="mailto:support@travelkeep.com"
             className="text-blue-600 hover:underline"
           >
-            support@travelsmart.com
+            support@travelkeep.com
           </a>
         </p>
       </div>

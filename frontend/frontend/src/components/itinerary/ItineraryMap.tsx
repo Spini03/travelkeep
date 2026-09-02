@@ -256,7 +256,7 @@ export default function ItineraryMap({
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" && !token) {
       console.warn(
-        "[TravelSmart] Mapbox token no detectado. Asegúrate de definir NEXT_PUBLIC_MAPBOX_API_TOKEN (o NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) en frontend/.env.local y reinicia `npm run dev`."
+        "[TravelKeep] Mapbox token no detectado. Asegúrate de definir NEXT_PUBLIC_MAPBOX_API_TOKEN (o NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) en frontend/.env.local y reinicia `npm run dev`."
       );
     }
   }, [token]);

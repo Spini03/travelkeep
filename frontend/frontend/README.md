@@ -1,4 +1,4 @@
-# TravelSmart Frontend
+# TravelKeep Frontend
 
 A Next.js application for creating AI-powered travel itineraries.
 

@@ -21,7 +21,7 @@ export function __warnMissingApiBaseIfNeeded(opts?: {
       : "en tiempo de carga";
   const fileHint = "frontend/.env.local"; // path from repo root
 
-  const title = "%cTravelSmart – Configuración faltante";
+  const title = "%cTravelKeep – Configuración faltante";
   const badge =
     "background:#b91c1c;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600";
   const body = [
@@ -40,7 +40,7 @@ export function __warnMissingApiBaseIfNeeded(opts?: {
   } else {
     // Server-side console (fallback)
     console.error(
-      "[TravelSmart] Falta configurar NEXT_PUBLIC_API_BASE_URL. Edita frontend/.env.local y agrega:\n  NEXT_PUBLIC_API_BASE_URL=http://localhost:8001\nReinicia el servidor de desarrollo."
+      "[TravelKeep] Falta configurar NEXT_PUBLIC_API_BASE_URL. Edita frontend/.env.local y agrega:\n  NEXT_PUBLIC_API_BASE_URL=http://localhost:8001\nReinicia el servidor de desarrollo."
     );
   }
   __warnedMissingApiBase = true;

@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TravelSmart - Itinerarios de viaje impulsados por IA",
+  title: "TravelKeep - Itinerarios de viaje impulsados por IA",
   description: "Crea itinerarios de viaje personalizados con ayuda de IA",
 };
 

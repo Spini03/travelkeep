@@ -19,7 +19,7 @@ export default function LandingPage() {
         <header className="text-center mb-8">
             <>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-cyan-600 to-blue-600 mb-4 leading-tight">
-                Planifica tu viaje con <span className="block mt-2">TravelSmart</span>
+                Planifica tu viaje con <span className="block mt-2">TravelKeep</span>
               </h1>
               <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
                 Crea itinerarios de viaje{" "}
@@ -89,7 +89,7 @@ export default function LandingPage() {
               Características Innovadoras
             </h2>
             <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
-              Descubre todas las herramientas que hacen de TravelSmart la
+              Descubre todas las herramientas que hacen de TravelKeep la
               plataforma más completa para planificar tus viajes
             </p>
           </div>
@@ -244,7 +244,7 @@ export default function LandingPage() {
               ¿Listo para comenzar tu próxima aventura?
             </h3>
             <p className="text-gray-600 text-base md:text-lg mb-8 max-w-2xl mx-auto">
-              Únete a miles de viajeros que ya confían en TravelSmart para
+              Únete a miles de viajeros que ya confían en TravelKeep para
               planificar sus experiencias inolvidables
             </p>
             <Button

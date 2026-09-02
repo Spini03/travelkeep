@@ -16,7 +16,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USERNAME)
-FROM_NAME = os.getenv("FROM_NAME", "TravelSmart AI")
+FROM_NAME = os.getenv("FROM_NAME", "TravelKeep AI")
 
 # Frontend URLs
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -93,13 +93,13 @@ class EmailService:
             return f"""
             <html>
                 <body>
-                    <h2>Welcome to TravelSmart AI!</h2>
+                    <h2>Welcome to TravelKeep AI!</h2>
                     <p>Hi {kwargs.get('user_name', 'there')},</p>
                     <p>Please verify your email address by clicking the link below:</p>
                     <p><a href="{kwargs.get('verification_url')}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
                     <p>Or copy and paste this link: {kwargs.get('verification_url')}</p>
                     <p>This link will expire in 24 hours.</p>
-                    <p>Best regards,<br>TravelSmart AI Team</p>
+                    <p>Best regards,<br>TravelKeep AI Team</p>
                 </body>
             </html>
             """
@@ -114,7 +114,7 @@ class EmailService:
                     <p>Or copy and paste this link: {kwargs.get('reset_url')}</p>
                     <p>This link will expire in 1 hour.</p>
                     <p>If you didn't request this, please ignore this email.</p>
-                    <p>Best regards,<br>TravelSmart AI Team</p>
+                    <p>Best regards,<br>TravelKeep AI Team</p>
                 </body>
             </html>
             """
@@ -122,17 +122,17 @@ class EmailService:
             return f"""
             <html>
                 <body>
-                    <h2>Welcome to TravelSmart AI!</h2>
+                    <h2>Welcome to TravelKeep AI!</h2>
                     <p>Hi {kwargs.get('user_name', 'there')},</p>
-                    <p>Your email has been verified successfully! Welcome to TravelSmart AI.</p>
+                    <p>Your email has been verified successfully! Welcome to TravelKeep AI.</p>
                     <p>You can now start planning your amazing trips with our AI-powered travel assistant.</p>
                     <p><a href="{FRONTEND_URL}/dashboard" style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Start Planning</a></p>
-                    <p>Best regards,<br>TravelSmart AI Team</p>
+                    <p>Best regards,<br>TravelKeep AI Team</p>
                 </body>
             </html>
             """
         else:
-            return f"<html><body><h2>Email from TravelSmart AI</h2><p>Content not available.</p></body></html>"
+            return f"<html><body><h2>Email from TravelKeep AI</h2><p>Content not available.</p></body></html>"
     
     async def send_verification_email(self, email: str, user_name: str, token: str) -> bool:
         """Send email verification email"""
@@ -154,12 +154,12 @@ class EmailService:
         This link will expire in 24 hours.
         
         Best regards,
-        TravelSmart AI Team
+        TravelKeep AI Team
         """
         
         return await self._send_email(
             to_email=email,
-            subject="Verify your TravelSmart AI account",
+            subject="Verify your TravelKeep AI account",
             html_content=html_content,
             text_content=text_content
         )
@@ -186,12 +186,12 @@ class EmailService:
         If you didn't request this, please ignore this email.
         
         Best regards,
-        TravelSmart AI Team
+        TravelKeep AI Team
         """
         
         return await self._send_email(
             to_email=email,
-            subject="Reset your TravelSmart AI password",
+            subject="Reset your TravelKeep AI password",
             html_content=html_content,
             text_content=text_content
         )
@@ -207,19 +207,19 @@ class EmailService:
         text_content = f"""
         Hi {user_name},
         
-        Welcome to TravelSmart AI! Your email has been verified successfully.
+        Welcome to TravelKeep AI! Your email has been verified successfully.
         
         You can now start planning your amazing trips with our AI-powered travel assistant.
         
         Visit: {FRONTEND_URL}/dashboard
         
         Best regards,
-        TravelSmart AI Team
+        TravelKeep AI Team
         """
         
         return await self._send_email(
             to_email=email,
-            subject="Welcome to TravelSmart AI!",
+            subject="Welcome to TravelKeep AI!",
             html_content=html_content,
             text_content=text_content
         )
@@ -232,14 +232,14 @@ class EmailService:
                 return False
             
             # Try to send a test email to the sender's own address
-            test_subject = "TravelSmart AI - Email Service Test"
+            test_subject = "TravelKeep AI - Email Service Test"
             test_html = """
             <html>
                 <body>
                     <h2>Email Service Test</h2>
-                    <p>This is a test email to verify that the TravelSmart AI email service is working correctly.</p>
+                    <p>This is a test email to verify that the TravelKeep AI email service is working correctly.</p>
                     <p>If you received this email, the email service is properly configured.</p>
-                    <p>Best regards,<br>TravelSmart AI Team</p>
+                    <p>Best regards,<br>TravelKeep AI Team</p>
                 </body>
             </html>
             """
@@ -268,10 +268,10 @@ class EmailService:
             <body>
                 <h2>Account Security Alert</h2>
                 <p>Hi {user_name},</p>
-                <p>Your TravelSmart AI account has been temporarily locked due to multiple failed login attempts.</p>
+                <p>Your TravelKeep AI account has been temporarily locked due to multiple failed login attempts.</p>
                 <p>The account will be automatically unlocked in 30 minutes.</p>
                 <p>If this wasn't you, please contact our support team.</p>
-                <p>Best regards,<br>TravelSmart AI Security Team</p>
+                <p>Best regards,<br>TravelKeep AI Security Team</p>
             </body>
         </html>
         """
@@ -279,19 +279,19 @@ class EmailService:
         text_content = f"""
         Hi {user_name},
         
-        Your TravelSmart AI account has been temporarily locked due to multiple failed login attempts.
+        Your TravelKeep AI account has been temporarily locked due to multiple failed login attempts.
         
         The account will be automatically unlocked in 30 minutes.
         
         If this wasn't you, please contact our support team.
         
         Best regards,
-        TravelSmart AI Security Team
+        TravelKeep AI Security Team
         """
         
         return await self._send_email(
             to_email=email,
-            subject="TravelSmart AI - Account Temporarily Locked",
+            subject="TravelKeep AI - Account Temporarily Locked",
             html_content=html_content,
             text_content=text_content
         )

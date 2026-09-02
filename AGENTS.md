@@ -1,6 +1,6 @@
 # AGENTS.md - travelkeep
  
-TravelKeep (ex TravelSmart). Monorepo `/backend` `/frontend`. Producto: yo (Santiago)
+TravelKeep (ex TravelKeep). Monorepo `/backend` `/frontend`. Producto: yo (Santiago)
 soy el usuario principal — construyo la herramienta a mi medida, la uso, y recién si
 anda bien se despliega públicamente. Core (itinerarios + chat IA + traveler-test)
 NO se reemplaza, se extiende. Alcance largo plazo: vuelos, alojamiento, city tours,
@@ -43,7 +43,7 @@ npm run type-check  # tsc --noEmit
  
 - Frontend está anidado: `frontend/frontend/` (no `frontend/` directo) — el `frontend/`
   raíz solo tiene docs/assets sueltos.
-- `frontend/frontend/package.json` todavía dice `"name": "travelsmart-frontend"`
+- `frontend/frontend/package.json` todavía dice `"name": "travelkeep-frontend"`
   (nombre viejo, no romper al renombrar sin querer).
 - Env vars JWT unificadas con prefijo `JWT_` (`JWT_SECRET_KEY`, `JWT_ALGORITHM`) —
   antes había mismatch de nombres entre código y `.env`.

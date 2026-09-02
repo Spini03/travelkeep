@@ -52,7 +52,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
-travelsmart_api.log
+travelkeep_api.log
 
 # Database
 *.db

@@ -1,8 +1,8 @@
-# TravelSmart-AI-API
+# TravelKeep
 
-Backend de TravelSmart, la plataforma para crear tu viaje ideal sin morir en el intento, potenciada por IA.
+Backend de TravelKeep, la plataforma para crear tu viaje ideal sin morir en el intento, potenciada por IA.
 
-Este repositorio contiene la API de backend construida con FastAPI que da servicio a la aplicación [TravelSmart Frontend](https://github.com/santipdmonte/travelsmart) 
+Este repositorio contiene la API de backend construida con FastAPI que da servicio a la aplicación TravelKeep Frontend (mismo monorepo, carpeta `/frontend`).
 
 La API se encarga de:
 -   Generar itinerarios de viaje personalizados usando agentes de IA (LangGraph).
@@ -33,8 +33,8 @@ Sigue estos pasos para configurar y ejecutar el proyecto localmente.
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/santipdmonte/TravelSmart-AI-API.git](https://github.com/santipdmonte/TravelSmart-AI-API.git)
-    cd TravelSmart-AI-API
+    git clone https://github.com/Spini03/travelkeep.git
+    cd travelkeep/backend
     ```
 
 2.  **Crear y activar un entorno virtual:**
@@ -60,7 +60,7 @@ Sigue estos pasos para configurar y ejecutar el proyecto localmente.
     cp env.example .env
     ```
     Deberás configurar, como mínimo:
-    * `DATABASE_URL`: La cadena de conexión a tu base de datos (ej. `postgresql://user:pass@localhost/travelsmartdb`).
+    * `DATABASE_URL`: La cadena de conexión a tu base de datos (ej. `postgresql://user:pass@localhost/travelkeepdb`).
     * `OPENAI_API_KEY`: Tu clave de API de OpenAI.
     * `SECRET_KEY`: Una clave secreta para la firma de JWT (puedes generar una con `openssl rand -hex 32`).
     * `GOOGLE_CLIENT_ID`: Tu Client ID de Google para OAuth.
@@ -97,7 +97,7 @@ La API estará disponible en http://localhost:8001. Puedes ver la documentación
 
 ### Estructura del Proyecto
 
-TravelSmart-AI-API/
+TravelKeep-AI-API/
 | Carpeta / Archivo     | Descripción                                               |
 | --------------------- | --------------------------------------------------------- |
 | `📂 alembic/`         | Configuración y versiones de migraciones de **Alembic**   |

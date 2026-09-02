@@ -1,4 +1,4 @@
-# TravelSmart Database Schema
+# TravelKeep Database Schema
 
 ## Entity Relationship Diagram
 

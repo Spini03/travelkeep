@@ -1,25 +1,25 @@
-# TravelSmart 🌎✈️
+# TravelKeep 🌎✈️
 
-TravelSmart es una plataforma innovadora diseñada para revolucionar la manera en que planificamos nuestros viajes. Combinando la potencia de la inteligencia artificial con la flexibilidad de la planificación manual, TravelSmart ofrece una experiencia única para crear itinerarios de viaje personalizados. Entendemos que cada viajero es único, y por eso, hemos puesto la personalización en el corazón de nuestra herramienta.
+TravelKeep es una plataforma innovadora diseñada para revolucionar la manera en que planificamos nuestros viajes. Combinando la potencia de la inteligencia artificial con la flexibilidad de la planificación manual, TravelKeep ofrece una experiencia única para crear itinerarios de viaje personalizados. Entendemos que cada viajero es único, y por eso, hemos puesto la personalización en el corazón de nuestra herramienta.
 
 Podrás descubrir tu perfil de viajero a través de un innovador "test". Este breve cuestionario nos permite conocer tus gustos, intereses y el tipo de experiencias que buscas. Con esta información, nuestro motor de Inteligencia Artificial no solo genera un itinerario, sino que crea un viaje a tu medida, sugiriendo actividades, lugares y ritmos que se alinean con tu personalidad.
 
 Para quienes aman tener el control, nuestro planificador manual sigue ofreciendo una flexibilidad total. Y gracias a un completo sistema de autenticación, puedes guardar todos tus viajes y acceder a ellos desde cualquier dispositivo.
 
-<img width="1886" height="862" alt="Foto_TravelSmart_LinkedIn" src="https://github.com/user-attachments/assets/f7bfee6e-f3dd-45f2-8c3c-8f97175ba3c6" />
+<img width="1886" height="862" alt="Foto_TravelKeep_LinkedIn" src="https://github.com/user-attachments/assets/f7bfee6e-f3dd-45f2-8c3c-8f97175ba3c6" />
 
 ## 🏗️ Arquitectura del Proyecto
 
-Este repositorio contiene el **Frontend (Next.js 15)**. 
-Para ver el núcleo de Inteligencia Artificial, Agentes LangGraph y la API en Python, visita el repositorio del Backend:
+Este directorio contiene el **Frontend (Next.js 15)** del monorepo. 
+Para ver el núcleo de Inteligencia Artificial, Agentes LangGraph y la API en Python, visita la carpeta `/backend` en el mismo repositorio:
 
-[![Backend Repository](https://img.shields.io/badge/Backend-FastAPI%20%2B%20LangGraph-blue?style=for-the-badge&logo=python)](https://github.com/santipdmonte/TravelSmart-AI-API)
+[![Backend Repository](https://img.shields.io/badge/Backend-FastAPI%20%2B%20LangGraph-blue?style=for-the-badge&logo=python)](https://github.com/Spini03/travelkeep/tree/main/backend)
 
 > **Nota para devs:** La arquitectura está desacoplada. El frontend consume una API RESTful que orquesta múltiples agentes de IA para la generación de itinerarios.
 
 ## 🎯 Sobre el Proyecto
 
-TravelSmart nace de la necesidad de simplificar la planificación de viajes, ofreciendo dos enfoques principales:
+TravelKeep nace de la necesidad de simplificar la planificación de viajes, ofreciendo dos enfoques principales:
 
 ### 🤖 Planificación con IA
 Nuestro sistema de inteligencia artificial analiza tu destino y la duración de tu viaje para generar automáticamente itinerarios optimizados. La IA considera:
@@ -48,7 +48,7 @@ Para aquellos que prefieren un control total sobre su itinerario, ofrecemos una 
 
 ## 💡 Visión
 
-Nuestra visión es transformar la planificación de viajes de una tarea logística a un acto de autodescubrimiento. Queremos que TravelSmart sea la herramienta que te ayude a entender qué tipo de viajero eres para que cada viaje sea una experiencia inolvidable y auténtica. Aspiramos a que el proceso de planificar tu próxima aventura sea tan emocionante y personal como el viaje mismo.
+Nuestra visión es transformar la planificación de viajes de una tarea logística a un acto de autodescubrimiento. Queremos que TravelKeep sea la herramienta que te ayude a entender qué tipo de viajero eres para que cada viaje sea una experiencia inolvidable y auténtica. Aspiramos a que el proceso de planificar tu próxima aventura sea tan emocionante y personal como el viaje mismo.
 
 ---
 
@@ -57,7 +57,7 @@ Desarrollado con ❤️ para viajeros por viajeros
 ## Estructura del Proyecto
 
 ```
-travelsmart-frontend/
+travelkeep-frontend/
 ├── src/
 │   ├── app/                # Páginas con App Router de Next.js
 │   ├── components/         # Componentes reutilizables (UI, auth, chat)
@@ -74,7 +74,7 @@ travelsmart-frontend/
 1. Clona el repositorio
 ```bash
 git clone <url-del-repositorio>
-cd travelsmart-frontend
+cd travelkeep-frontend
 ```
 
 2. Instala las dependencias

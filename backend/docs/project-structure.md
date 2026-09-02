@@ -1,9 +1,9 @@
-# TravelSmart AI API - Project Structure
+# TravelKeep AI API - Project Structure
 
 ## 📁 Directory Structure
 
 ```
-TravelSmart-AI-API/
+TravelKeep-AI-API/
 ├── 📂 alembic/                          # Database migrations
 │   ├── versions/                        # Migration versions
 │   │   ├── b60401dd36dc_initial_schema.py

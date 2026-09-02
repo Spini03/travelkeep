@@ -124,7 +124,7 @@ function VerifyEmailPageInner() {
               ¡Correo verificado con éxito!
             </h2>
             <p className="text-sm text-muted-foreground">
-              ¡Bienvenido a TravelSmart! Ya puedes empezar a planear.
+              ¡Bienvenido a TravelKeep! Ya puedes empezar a planear.
             </p>
             {isRedirecting && (
               <p className="text-sm text-blue-600">Redirigiéndote...</p>
@@ -169,7 +169,7 @@ function VerifyEmailPageInner() {
             <Link href="/" className="flex items-center space-x-2">
               <Mail className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">
-                TravelSmart
+                TravelKeep
               </span>
             </Link>
           </div>
@@ -191,7 +191,7 @@ function VerifyEmailPageInner() {
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-gray-500">
-            © 2025 TravelSmart. Todos los derechos reservados.
+            © 2025 TravelKeep. Todos los derechos reservados.
           </p>
         </div>
       </footer>

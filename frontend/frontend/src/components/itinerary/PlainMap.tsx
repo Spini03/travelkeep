@@ -47,7 +47,7 @@ export default function PlainMap({
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" && !token) {
       console.warn(
-        "[TravelSmart] Mapbox token no detectado. Define NEXT_PUBLIC_MAPBOX_API_TOKEN (o NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) en frontend/.env.local."
+        "[TravelKeep] Mapbox token no detectado. Define NEXT_PUBLIC_MAPBOX_API_TOKEN (o NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) en frontend/.env.local."
       );
     }
   }, [token]);
@@ -119,7 +119,7 @@ export default function PlainMap({
         mapRef.resize();
       } catch (error) {
         if (process.env.NODE_ENV !== "production") {
-          console.warn("[TravelSmart] Map resize skipped:", error);
+          console.warn("[TravelKeep] Map resize skipped:", error);
         }
       }
     };

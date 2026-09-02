@@ -62,7 +62,7 @@ const Navigation = () => {
                 <div className="flex-shrink-0 flex items-center">
                   <MapPin className="h-8 w-8 text-indigo-600" />
                   <span className="ml-2 text-xl font-bold text-gray-900">
-                    TravelSmart
+                    TravelKeep
                   </span>
                 </div>
               </Link>

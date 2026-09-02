@@ -112,7 +112,7 @@ export default function SettingsPage() {
             </CardTitle>
             <CardDescription>
               Estamos trabajando en configuraciones completas para darte control
-              total sobre tu experiencia en TravelSmart.
+              total sobre tu experiencia en TravelKeep.
             </CardDescription>
           </CardHeader>
           <CardContent>

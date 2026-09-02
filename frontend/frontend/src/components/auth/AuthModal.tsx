@@ -79,7 +79,7 @@ export default function AuthModal({
                 ¡Cuenta creada con éxito!
               </h2>
               <p className="text-sm text-gray-600 mt-2">
-                ¡Bienvenido a TravelSmart! Por favor, verifica tu correo para
+                ¡Bienvenido a TravelKeep! Por favor, verifica tu correo para
                 comenzar.
               </p>
             </div>
@@ -97,7 +97,7 @@ export default function AuthModal({
                   </p>
                   <p className="text-sm">
                     Una vez verificado, podrás acceder a todas las funciones de
-                    TravelSmart, incluyendo crear y gestionar tus itinerarios.
+                    TravelKeep, incluyendo crear y gestionar tus itinerarios.
                   </p>
                 </div>
               </AlertDescription>

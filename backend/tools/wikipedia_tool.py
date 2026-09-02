@@ -17,7 +17,7 @@ from langchain_core.tools import tool
 # User-Agent header requerido por la API de Wikipedia
 # Según la política de etiqueta de MediaWiki: https://www.mediawiki.org/wiki/API:Etiquette
 HEADERS = {
-    'User-Agent': 'TravelSmart-AI/1.0 (https://github.com/travelsmart; contact@travelsmart.com) Python/requests'
+    'User-Agent': 'TravelKeep-AI/1.0 (https://github.com/Spini03/travelkeep; support@travelkeep.com) Python/requests'
 }
 
 

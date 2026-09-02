@@ -1,8 +1,8 @@
-# Estructura del Proyecto TravelSmart
+# Estructura del Proyecto TravelKeep
 
 ## Descripción General
 
-TravelSmart es una aplicación web de planificación de viajes construida con **Next.js 15** (App Router), **React 19** y **TypeScript**. La aplicación incluye funcionalidades de autenticación, creación de itinerarios, test de personalidad de viajero, y gestión de usuarios.
+TravelKeep es una aplicación web de planificación de viajes construida con **Next.js 15** (App Router), **React 19** y **TypeScript**. La aplicación incluye funcionalidades de autenticación, creación de itinerarios, test de personalidad de viajero, y gestión de usuarios.
 
 ## Tecnologías Principales
 
